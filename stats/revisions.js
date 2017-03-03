@@ -78,7 +78,7 @@ touch.sync(OUTPUT);
 
 // Function used to gather already done rows
 function checkAlreadyDone(next) {
-  const parser = csv.parse({delimiter: ',', columns: true});
+  const parser = csv.parse({delimiter: ','});
 
   return fs.createReadStream(OUTPUT, 'utf-8')
     .pipe(parser)
