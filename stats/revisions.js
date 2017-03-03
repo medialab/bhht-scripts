@@ -83,7 +83,7 @@ function checkAlreadyDone(next) {
     .on('end', () => {
       ALREADY_DONE_COUNT = ALREADY_DONE.size;
 
-      console.log('Already done ' + ALREADY_DONE_COUNT + ' elements.');
+      console.log(`Already done ${ALREADY_DONE_COUNT.size} elements.`);
 
       return next();
     });
@@ -144,7 +144,7 @@ async.series([
             name: row[2]
           };
 
-          return !ALREADY_DONE.has(hashRow(row))
+          return !ALREADY_DONE.has(hashRow(row));
         });
 
         if (!filteredRows.length)
@@ -155,9 +155,6 @@ async.series([
         filteredRows.forEach(row => console.log(`Processing "${row.name}"...`));
 
         const ids = filteredRows.map(row => +row.id);
-
-        if (!ids.length)
-          return callback();
 
         return getRevisionCountsForIds(ids, (err, result) => {
           if (err)
