@@ -138,7 +138,14 @@ async.series([
     highland(stream)
       .batch(100)
       .flatMap(highland.wrapCallback(function(rows, callback) {
-        const filteredRows = rows.filter(row => !ALREADY_DONE.has(hashRow(row)));
+        const filteredRows = rows.filter(row => {
+          row = {
+            lang: row[0],
+            name: row[2]
+          };
+
+          return !ALREADY_DONE.has(hashRow(row))
+        });
 
         if (!filteredRows.length)
           return callback();
@@ -158,11 +165,9 @@ async.series([
 
           // Writing to output stream
           result.forEach(line => {
-            console.log(line);
-
             output.write(writeRow([
               'en',
-              rowsIndex[line.id].id,
+              line.id,
               rowsIndex[line.id].name,
               line.count
             ]) + '\n');
