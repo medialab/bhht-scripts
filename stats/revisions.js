@@ -20,7 +20,7 @@ const CONNECTION = mysql.createConnection({
 
 CONNECTION.connect();
 
-const ids = `(${[50, 51].join(', ')})`;
+const ids = 50, 51].join(', ');
 
 CONNECTION.query(QUERIES.countRevisionsForMultiplePages, [ids], (err, results, fields) => {
   console.log(err, results, fields);
