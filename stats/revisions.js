@@ -7,7 +7,7 @@
  */
 const mysql = require('mysql'),
       yesql = require('yesql'),
-      config = require('./config.json');
+      config = require('./config.default.json');
 
 const QUERIES = yesql('./sql/');
 
@@ -20,9 +20,7 @@ const CONNECTION = mysql.createConnection({
 
 CONNECTION.connect();
 
-const ids = [50, 51].join(', ');
-
-CONNECTION.query(QUERIES.countRevisionsForMultiplePages, [ids], (err, results, fields) => {
+CONNECTION.query(QUERIES.countRevisionsForMultiplePages, [[50, 51]], (err, results, fields) => {
   console.log(err, results, fields);
 });
 
