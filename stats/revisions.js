@@ -15,6 +15,8 @@ const yargs = require('yargs'),
       fs = require('fs'),
       _ = require('lodash');
 
+// TODO: try to run multiple statements at once
+
 /**
  * Helpers.
  */
@@ -83,7 +85,7 @@ function checkAlreadyDone(next) {
   return fs.createReadStream(OUTPUT, 'utf-8')
     .pipe(parser)
     .on('data', row => {
-      ALREADY_DONE.add(readHeadlessRow(hashRow(row)));
+      ALREADY_DONE.add(hashRow(readHeadlessRow(row)));
     })
     .on('error', next)
     .on('end', () => {
