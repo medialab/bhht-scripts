@@ -146,7 +146,7 @@ async.series([
       .batch(100)
       .flatMap(highland.wrapCallback(function(rows, callback) {
         const filteredRows = rows.filter(row => {
-          return !ALREADY_DONE.has(hashRow(readHeadlessRow(row)));
+          return !ALREADY_DONE.has(hashRow(row));
         });
 
         if (!filteredRows.length)
