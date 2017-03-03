@@ -6,7 +6,10 @@
  * aggregated statistics related to page revisions.
  */
 const mysql = require('mysql'),
+      yesql = require('yesql'),
       config = require('./config.json');
+
+const QUERIES = yesql('./sql/');
 
 const CONNECTION = mysql.createConnection({
   host: 'enwiki.labsdb',
@@ -17,8 +20,8 @@ const CONNECTION = mysql.createConnection({
 
 CONNECTION.connect();
 
-CONNECTION.query('SELECT * FROM revision LIMIT 10', (err, results) => {
-  console.log(err, results);
+CONNECTION.query(QUERIES.countRevisions, {id: 50}, (err, results, fields) => {
+  console.log(err, results, fields);
 });
 
 CONNECTION.end();

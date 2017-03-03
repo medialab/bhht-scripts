@@ -9,6 +9,7 @@
   "author": "yomguithereal <kropotkinepiotr@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "mysql": "^2.13.0"
+    "mysql": "^2.13.0",
+    "yesql": "^3.1.4"
   }
 }
