@@ -1,2 +1,2 @@
 -- countRevisions
-SELECT count(*) FROM revision WHERE rev_page = ?;
+SELECT count(*) AS count FROM revision WHERE rev_page = ?;
