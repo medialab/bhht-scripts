@@ -64,6 +64,8 @@ const ALREADY_DONE = new Set(),
       INPUT = argv.input,
       OUTPUT = argv.output;
 
+let ALREADY_DONE_COUNT = 0;
+
 // Reading the output file
 touch.sync(OUTPUT);
 
@@ -77,7 +79,13 @@ function checkAlreadyDone(next) {
       ALREADY_DONE.add(hashRow(row));
     })
     .on('error', next)
-    .on('end', () => next());
+    .on('end', () => {
+      ALREADY_DONE_COUNT = ALREADY_DONE.size;
+
+      console.log('Already done ' + ALREADY_DONE_COUNT + ' elements.');
+
+      return next();
+    });
 }
 
 /**
@@ -129,7 +137,17 @@ async.series([
     highland(stream)
       .batch(100)
       .flatMap(highland.wrapCallback(function(rows, callback) {
-        const ids = rows.map(row => +row.id);
+        const filteredRows = rows.filter(row => !ALREADY_DONE.has(hashRow(row)));
+
+        if (!filteredRows.length)
+          return callback();
+
+        filteredRows.forEach(row => console.log(`Processing "${row.name}"...`));
+
+        const ids = filteredRows.map(row => +row.id);
+
+        if (!ids.length)
+          return callback();
 
         return getRevisionCountsForIds(ids, (err, result) => {
           if (err)
