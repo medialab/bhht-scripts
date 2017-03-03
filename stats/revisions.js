@@ -83,7 +83,7 @@ function checkAlreadyDone(next) {
     .on('end', () => {
       ALREADY_DONE_COUNT = ALREADY_DONE.size;
 
-      console.log(`Already done ${ALREADY_DONE_COUNT.size} elements.`);
+      console.log(`Already done ${ALREADY_DONE_COUNT} elements.`);
 
       return next();
     });
