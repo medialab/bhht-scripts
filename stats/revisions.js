@@ -18,6 +18,13 @@ const yargs = require('yargs'),
 /**
  * Helpers.
  */
+function readHeadlessRow(row) {
+  return {
+    lang: row[0],
+    name: row[2]
+  };
+}
+
 function hashRow(row) {
   return `${row.lang}§${row.name}`;
 }
@@ -77,7 +84,7 @@ function checkAlreadyDone(next) {
   return fs.createReadStream(OUTPUT, 'utf-8')
     .pipe(parser)
     .on('data', row => {
-      ALREADY_DONE.add(hashRow(row));
+      ALREADY_DONE.add(readHeadlessRow(hashRow(row)));
     })
     .on('error', next)
     .on('end', () => {
@@ -139,12 +146,7 @@ async.series([
       .batch(100)
       .flatMap(highland.wrapCallback(function(rows, callback) {
         const filteredRows = rows.filter(row => {
-          row = {
-            lang: row[0],
-            name: row[2]
-          };
-
-          return !ALREADY_DONE.has(hashRow(row));
+          return !ALREADY_DONE.has(hashRow(readHeadlessRow(row)));
         });
 
         if (!filteredRows.length)
