@@ -157,8 +157,8 @@ async.series([
           result.forEach((line, i) => {
             output.write(writeRow([
               'en',
-              rows[i].id,
-              rows[i].name,
+              filteredRows[i].id,
+              filteredRows[i].name,
               line.count
             ]) + '\n');
           });
