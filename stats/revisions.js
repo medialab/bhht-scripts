@@ -21,6 +21,17 @@ function hashRow(row) {
   return `${row.lang}§${row.name}`;
 }
 
+function writeRow(row) {
+  return row.map(item => {
+    item = '' + item;
+
+    if (/,/.test(item))
+      item = '"' + item '"';
+
+    return item;
+  }).join(',');
+}
+
 /**
  * CLI.
  */
@@ -108,14 +119,10 @@ async.series([
   function processRows(next) {
     const parser = csv.parse({delimiter: ',', columns: true});
 
-    const stringifier = csv.stringify({delimiter: ',', header: true, columns: true});
-
-    const writer = fs.createWriteStream(OUTPUT, {
+    const output = fs.createWriteStream(OUTPUT, {
       flags: 'a+',
       defaultEncoding: 'utf-8'
     });
-
-    stringifier.pipe(writer);
 
     const stream = fs.createReadStream(INPUT, 'utf-8').pipe(parser);
 
@@ -130,12 +137,12 @@ async.series([
 
           // Writing to output stream
           result.forEach((line, i) => {
-            stringifier.write({
-              lang: 'en',
-              id: rows[i].id,
-              name: rows[i].name,
-              revisions: line.count
-            });
+            output.write(writeRow([
+              'en',
+              rows[i].id,
+              rows[i].name,
+              line.count
+            ]) + '\n');
           });
 
           return callback();
