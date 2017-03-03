@@ -1,0 +1,5 @@
+data
+backup.csv
+result.csv
+__pycache__
+.DS_Store
