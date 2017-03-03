@@ -20,7 +20,7 @@ const CONNECTION = mysql.createConnection({
 
 CONNECTION.connect();
 
-CONNECTION.query(QUERIES.countRevisions, {id: 50}, (err, results, fields) => {
+CONNECTION.query(QUERIES.countRevisions, [50], (err, results, fields) => {
   console.log(err, results, fields);
 });
 
