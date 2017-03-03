@@ -1,0 +1,14 @@
+{
+  "name": "bhht-stats",
+  "version": "1.0.0",
+  "description": "Scripts aiming at retrieving some stats about Wikipedia pages from the SQL database.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "yomguithereal <kropotkinepiotr@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "mysql": "^2.13.0"
+  }
+}
