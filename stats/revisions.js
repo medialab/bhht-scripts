@@ -12,7 +12,8 @@ const yargs = require('yargs'),
       yesql = require('yesql'),
       touch = require('touch'),
       csv = require('csv'),
-      fs = require('fs');
+      fs = require('fs'),
+      _ = require('lodash');
 
 /**
  * Helpers.
@@ -142,6 +143,8 @@ async.series([
         if (!filteredRows.length)
           return callback();
 
+        const rowsIndex = _.keyBy(filteredRows, 'id');
+
         filteredRows.forEach(row => console.log(`Processing "${row.name}"...`));
 
         const ids = filteredRows.map(row => +row.id);
@@ -154,11 +157,13 @@ async.series([
             return err;
 
           // Writing to output stream
-          result.forEach((line, i) => {
+          result.forEach(line => {
+            console.log(line);
+
             output.write(writeRow([
               'en',
-              filteredRows[i].id,
-              filteredRows[i].name,
+              rowsIndex[line.id].id,
+              rowsIndex[line.id].name,
               line.count
             ]) + '\n');
           });
