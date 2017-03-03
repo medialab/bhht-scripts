@@ -20,13 +20,12 @@ const yargs = require('yargs'),
  */
 function readHeadlessRow(row) {
   return {
-    lang: row[0],
     name: row[2]
   };
 }
 
 function hashRow(row) {
-  return `${row.lang}§${row.name}`;
+  return `${row.name}`;
 }
 
 function writeRow(row) {
