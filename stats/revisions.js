@@ -26,7 +26,7 @@ function writeRow(row) {
     item = '' + item;
 
     if (/,/.test(item))
-      item = '"' + item '"';
+      item = '"' + item + '"';
 
     return item;
   }).join(',');
