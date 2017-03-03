@@ -7,7 +7,7 @@
  */
 const mysql = require('mysql'),
       yesql = require('yesql'),
-      config = require('./config.default.json');
+      config = require('./config.json');
 
 const QUERIES = yesql('./sql/');
 
