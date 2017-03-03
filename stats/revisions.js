@@ -154,7 +154,11 @@ async.series([
 
         const rowsIndex = _.keyBy(filteredRows, 'id');
 
-        filteredRows.forEach(row => console.log(`Processing "${row.name}"...`));
+        filteredRows.forEach(row => {
+          ALREADY_DONE_COUNT++;
+
+          console.log(`(${ALREADY_DONE_COUNT}) Processing "${row.name}"...`)
+        });
 
         const ids = filteredRows.map(row => +row.id);
 
