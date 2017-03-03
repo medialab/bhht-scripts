@@ -115,7 +115,7 @@ async.series([
       defaultEncoding: 'utf-8'
     });
 
-    const output = stringifier.pipe(writer);
+    stringifier.pipe(writer);
 
     const stream = fs.createReadStream(INPUT, 'utf-8').pipe(parser);
 
@@ -130,7 +130,7 @@ async.series([
 
           // Writing to output stream
           result.forEach((line, i) => {
-            output.write({
+            stringifier.write({
               lang: 'en',
               id: rows[i].id,
               name: rows[i].name,
