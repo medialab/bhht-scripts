@@ -29,5 +29,8 @@ Structure of the `revision` table:
 ## Queries
 
 * Number of revisions per page
+* Number of `minor_edit` revisions per page
+* Number of `deleted` revisions per page
 * Number of distinct contributors per page
-* Date of first revision
+* Date of page's first revision
+* Min, Max, Mean, Variance, (No median, sigh...) of edit length per page
