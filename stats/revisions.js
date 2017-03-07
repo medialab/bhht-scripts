@@ -143,7 +143,8 @@ function retrieveDataForIds(ids, index, next) {
       const result = results[name];
 
       result.forEach(row => {
-        resultsPerRow[row.id] = row;
+        resultsPerRow[row.id] = resultsPerRow[row.id] || {};
+        resultsPerRow[row.id][name] = row;
       });
     }
 
