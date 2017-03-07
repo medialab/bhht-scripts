@@ -148,9 +148,7 @@ function retrieveDataForIds(ids, index, next) {
       });
     }
 
-    console.log(resultsPerRow);
-
-    throw Error('test');
+    return next(null, resultsPerRow);
   });
 }
 
@@ -191,19 +189,21 @@ async.series([
 
         const ids = filteredRows.map(row => +row.id);
 
-        return retrieveDataForIds(ids, rowsIndex, (err, result) => {
+        return retrieveDataForIds(ids, rowsIndex, (err, data) => {
           if (err)
             return err;
 
           // Writing to output stream
-          result.forEach(line => {
-            output.write(writeRow([
+          for (const id in data) {
+            const line = [
               'en',
-              line.id,
-              rowsIndex[line.id].name,
-              line.count
-            ]) + '\n');
-          });
+              id,
+              rowsIndex[id].name,
+              data[id].count.count
+            ];
+
+            output.write(writeRow(line) + '\n');
+          }
 
           return callback();
         });
