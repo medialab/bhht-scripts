@@ -134,9 +134,15 @@ function retrieveDataForIds(ids, index, next) {
     minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids),
     distinctContributorsCount: runQuery(QUERIES.countDistinctContributorsForMultiplePages, ids),
     firstRevision: runQuery(QUERIES.firstRevisionForMultiplePages, ids),
-    // lengthStats: next => {
-    //   return CONNECTION
-    // }
+    lengthStats: next => {
+      return CONNECTION.query(QUERIES.revisionStatsForMultiplePages, [ids], (err, results) => {
+        if (err)
+          return next(err);
+
+        console.log(results);
+        return next(null, results[2]);
+      });
+    }
   }, (err, results) => {
     if (err)
       return next(err);
@@ -188,7 +194,7 @@ async.series([
         filteredRows.forEach(row => {
           ALREADY_DONE_COUNT++;
 
-          console.log(`(${ALREADY_DONE_COUNT}) Processing "${row.name}"...`)
+          // console.log(`(${ALREADY_DONE_COUNT}) Processing "${row.name}"...`)
         });
 
         const ids = filteredRows.map(row => +row.id);
@@ -196,8 +202,6 @@ async.series([
         return retrieveDataForIds(ids, rowsIndex, (err, data) => {
           if (err)
             return err;
-
-          console.log(data);
 
           // Writing to output stream
           for (const id in data) {
