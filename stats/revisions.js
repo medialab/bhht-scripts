@@ -15,8 +15,6 @@ const yargs = require('yargs'),
       fs = require('fs'),
       _ = require('lodash');
 
-// TODO: try to run multiple statements at once
-
 /**
  * Helpers.
  */
@@ -132,7 +130,11 @@ const runQuery = _.curry((query, ids, next) => {
 function retrieveDataForIds(ids, index, next) {
   return async.parallel({
     count: runQuery(QUERIES.countRevisionsForMultiplePages, ids),
-    minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids)
+    minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids),
+    delectedCount: runQuery(QUERIES.countDeletedRevisionsForMultiplePages, ids),
+    distinctContributorsCount: runQuery(QUERIES.countDistinctContributorsForMultiplePages, ids),
+    firstRevision: runQuery(QUERIES.firstRevisionForMultiplePages, ids),
+    lengthStats: runQuery(QUERIES.revisionLengthStatsForMultiplePages, ids)
   }, (err, results) => {
     if (err)
       return next(err);
@@ -200,7 +202,15 @@ async.series([
               id,
               rowsIndex[id].name,
               data[id].count.count,
-              data[id].minorEditCount ? data[id].minorEditCount.count : 0
+              data[id].minorEditCount ? data[id].minorEditCount.count : 0,
+              data[id].delectedCount ? data[id].delectedCount.count : 0,
+              data[id].distinctContributorsCount ? data[id].distinctContributorsCount.count : 0,
+              data[id].firstRevisionForMultiplePages ? (data[id].firstRevisionForMultiplePages.firstRevision || '') : '',
+              data[id].lengthStats ? data[id].lengthStats.sum : '',
+              data[id].lengthStats ? data[id].lengthStats.max : '',
+              data[id].lengthStats ? data[id].lengthStats.min : '',
+              data[id].lengthStats ? data[id].lengthStats.mean : '',
+              data[id].lengthStats ? data[id].lengthStats.variance : ''
             ];
 
             output.write(writeRow(line) + '\n');
