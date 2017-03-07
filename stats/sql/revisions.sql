@@ -17,24 +17,25 @@ WHERE rev_page IN (?) AND rev_deleted = 1
 GROUP BY rev_page;
 
 -- countDistinctContributorsForMultiplePages
-SELECT count(DISTINCT rev_user) as count, rev_page AS id
+SELECT count(DISTINCT rev_user) AS count, rev_page AS id
 FROM revision
 WHERE rev_page IN (?)
 GROUP BY rev_page;
 
 -- firstRevisionForMultiplePages
-SELECT min(rev_timestamp) as firstRevision, rev_page AS id
+SELECT min(rev_timestamp) AS firstRevision, rev_page AS id
 FROM revision
 WHERE rev_page IN (?)
 GROUP BY rev_page;
 
 -- revisionLengthStatsForMultiplePages
 SELECT
-  SUM(rev_len) as sum,
-  MAX(rev_len) as max,
-  MIN(rev_len) as min,
-  AVG(rev_len) as mean,
-  VARIANCE(rev_len) as variance
+  rev_page AS id
+  SUM(rev_len) AS sum,
+  MAX(rev_len) AS max,
+  MIN(rev_len) AS min,
+  AVG(rev_len) AS mean,
+  VARIANCE(rev_len) AS variance
 FROM revision
 WHERE rev_page IN (?)
 GROUP BY rev_page;
