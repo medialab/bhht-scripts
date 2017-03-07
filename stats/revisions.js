@@ -133,7 +133,7 @@ function retrieveDataForIds(ids, index, next) {
   return async.parallel({
     count: runQuery(QUERIES.countRevisionsForMultiplePages, ids),
     minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids)
-  }, (err, results) {
+  }, (err, results) => {
     if (err)
       return next(err);
 
