@@ -199,7 +199,8 @@ async.series([
               'en',
               id,
               rowsIndex[id].name,
-              data[id].count.count
+              data[id].count.count,
+              data[id].minorEditCount.count
             ];
 
             output.write(writeRow(line) + '\n');
