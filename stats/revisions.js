@@ -108,7 +108,8 @@ function connect() {
     password: CONFIG.password,
     supportBigNumbers: true,
     bugNumberStrings: true,
-    dateStrings: true
+    dateStrings: true,
+    multipleStatements: true
   });
 
   CONNECTION.connect();
@@ -133,7 +134,9 @@ function retrieveDataForIds(ids, index, next) {
     minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids),
     distinctContributorsCount: runQuery(QUERIES.countDistinctContributorsForMultiplePages, ids),
     firstRevision: runQuery(QUERIES.firstRevisionForMultiplePages, ids),
-    lengthStats: runQuery(QUERIES.revisionStatsForMultiplePages, ids)
+    // lengthStats: next => {
+    //   return CONNECTION
+    // }
   }, (err, results) => {
     if (err)
       return next(err);
