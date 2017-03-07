@@ -142,7 +142,9 @@ function retrieveDataForIds(ids, index, next) {
     for (const name in results) {
       const result = results[name];
 
-      resultsPerRow[result.id] = result;
+      result.forEach(row => {
+        resultsPerRow[row.id] = row;
+      });
     }
 
     console.log(resultsPerRow);
