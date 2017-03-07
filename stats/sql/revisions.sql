@@ -30,7 +30,7 @@ GROUP BY rev_page;
 
 -- revisionLengthStatsForMultiplePages
 SELECT
-  rev_page AS id
+  rev_page AS id,
   SUM(rev_len) AS sum,
   MAX(rev_len) AS max,
   MIN(rev_len) AS min,
