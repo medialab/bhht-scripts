@@ -136,10 +136,9 @@ function retrieveDataForIds(ids, index, next) {
     firstRevision: runQuery(QUERIES.firstRevisionForMultiplePages, ids),
     lengthStats: next => {
       return CONNECTION.query(QUERIES.revisionStatsForMultiplePages, [ids], (err, results) => {
-        if (err)
+        if (err || !results || !results.length || !results[2])
           return next(err);
 
-        console.log(results);
         return next(null, results[2]);
       });
     }
@@ -194,7 +193,7 @@ async.series([
         filteredRows.forEach(row => {
           ALREADY_DONE_COUNT++;
 
-          // console.log(`(${ALREADY_DONE_COUNT}) Processing "${row.name}"...`)
+          console.log(`(${ALREADY_DONE_COUNT}) Processing "${row.name}"...`)
         });
 
         const ids = filteredRows.map(row => +row.id);
@@ -213,7 +212,15 @@ async.series([
               data[id].minorEditCount ? data[id].minorEditCount.count : 0,
               data[id].distinctContributorsCount ? data[id].distinctContributorsCount.count : 0,
               data[id].firstRevision ? (data[id].firstRevision.firstRevision || '').slice(0, 8) : '',
-              data[id].firstRevision ? data[id].firstRevision.bytes : 0
+              data[id].firstRevision ? data[id].firstRevision.bytes : 0,
+              data[id].lengthStats ? data[id].lengthStats.additionCount : 0,
+              data[id].lengthStats ? data[id].lengthStats.deletionCount : 0,
+              data[id].lengthStats ? data[id].lengthStats.additionSum : 0,
+              data[id].lengthStats ? data[id].lengthStats.deletionSum : 0,
+              data[id].lengthStats ? data[id].lengthStats.additionMax : 0,
+              data[id].lengthStats ? data[id].lengthStats.deletionMax : 0,
+              data[id].lengthStats ? data[id].lengthStats.additionVariance : 0,
+              data[id].lengthStats ? data[id].lengthStats.deletionVariance : 0,
             ];
 
             output.write(writeRow(line) + '\n');
