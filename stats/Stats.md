@@ -25,12 +25,17 @@ Structure of the `revision` table:
 +--------------------+---------------------+------+-----+---------+-------+
 ```
 
+## Notes
+
+* `rev_len` tracks the byte length of the page after revision's application.
 
 ## Queries
 
 * Number of revisions per page
 * Number of `minor_edit` revisions per page
-* Number of `deleted` revisions per page
 * Number of distinct contributors per page
 * Date of page's first revision
-* Min, Max, Mean, Variance, (No median, sigh...) of edit length per page
+* Number of bytes at creation
+* Number of +/- diffs per page
+* Sum of +/- diffs per page
+* Max of +/- diffs per page

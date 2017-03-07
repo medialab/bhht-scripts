@@ -131,10 +131,9 @@ function retrieveDataForIds(ids, index, next) {
   return async.parallel({
     count: runQuery(QUERIES.countRevisionsForMultiplePages, ids),
     minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids),
-    delectedCount: runQuery(QUERIES.countDeletedRevisionsForMultiplePages, ids),
     distinctContributorsCount: runQuery(QUERIES.countDistinctContributorsForMultiplePages, ids),
     firstRevision: runQuery(QUERIES.firstRevisionForMultiplePages, ids),
-    lengthStats: runQuery(QUERIES.revisionLengthStatsForMultiplePages, ids)
+    lengthStats: runQuery(QUERIES.revisionStatsForMultiplePages, ids)
   }, (err, results) => {
     if (err)
       return next(err);
@@ -195,6 +194,8 @@ async.series([
           if (err)
             return err;
 
+          console.log(data);
+
           // Writing to output stream
           for (const id in data) {
             const line = [
@@ -203,14 +204,9 @@ async.series([
               rowsIndex[id].name,
               data[id].count.count,
               data[id].minorEditCount ? data[id].minorEditCount.count : 0,
-              data[id].delectedCount ? data[id].delectedCount.count : 0,
               data[id].distinctContributorsCount ? data[id].distinctContributorsCount.count : 0,
-              data[id].firstRevision ? (data[id].firstRevision.firstRevision || '') : '',
-              data[id].lengthStats ? data[id].lengthStats.sum : '',
-              data[id].lengthStats ? data[id].lengthStats.max : '',
-              data[id].lengthStats ? data[id].lengthStats.min : '',
-              data[id].lengthStats ? data[id].lengthStats.mean : '',
-              data[id].lengthStats ? data[id].lengthStats.variance : ''
+              data[id].firstRevision ? (data[id].firstRevision.firstRevision || '').slice(0, 8) : '',
+              data[id].firstRevision ? data[id].firstRevision.bytes : 0
             ];
 
             output.write(writeRow(line) + '\n');
