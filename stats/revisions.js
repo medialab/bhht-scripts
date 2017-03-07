@@ -107,7 +107,10 @@ function connect() {
     host: 'enwiki.labsdb',
     database: 'enwiki_p',
     user: CONFIG.user,
-    password: CONFIG.password
+    password: CONFIG.password,
+    supportBigNumbers: true,
+    bugNumberStrings: true,
+    dateStrings: true
   });
 
   CONNECTION.connect();
@@ -117,12 +120,34 @@ function disconnect() {
   CONNECTION.end();
 }
 
-function getRevisionCountsForIds(ids, next) {
-  return CONNECTION.query(QUERIES.countRevisionsForMultiplePages, [ids], (err, results) => {
+const runQuery = _.curry((query, ids, next) => {
+  return CONNECTION.query(query, [ids], (err, results) => {
     if (err)
       return next(err);
 
     return next(null, results);
+  });
+});
+
+function retrieveDataForIds(ids, index, next) {
+  return async.parallel({
+    count: runQuery(QUERIES.countRevisionsForMultiplePages, ids),
+    minorEditCount: runQuery(QUERIES.countMinorEditRevisionsForMultiplePages, ids)
+  }, (err, results) {
+    if (err)
+      return next(err);
+
+    const resultsPerRow = {};
+
+    for (const name in results) {
+      const result = results[name];
+
+      resultsPerRow[result.id] = result;
+    }
+
+    console.log(resultsPerRow);
+
+    throw Error('test');
   });
 }
 
@@ -163,7 +188,7 @@ async.series([
 
         const ids = filteredRows.map(row => +row.id);
 
-        return getRevisionCountsForIds(ids, (err, result) => {
+        return retrieveDataForIds(ids, rowsIndex, (err, result) => {
           if (err)
             return err;
 
