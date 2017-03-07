@@ -205,7 +205,7 @@ async.series([
               data[id].minorEditCount ? data[id].minorEditCount.count : 0,
               data[id].delectedCount ? data[id].delectedCount.count : 0,
               data[id].distinctContributorsCount ? data[id].distinctContributorsCount.count : 0,
-              data[id].firstRevisionForMultiplePages ? (data[id].firstRevisionForMultiplePages.firstRevision || '') : '',
+              data[id].firstRevision ? (data[id].firstRevision.firstRevision || '') : '',
               data[id].lengthStats ? data[id].lengthStats.sum : '',
               data[id].lengthStats ? data[id].lengthStats.max : '',
               data[id].lengthStats ? data[id].lengthStats.min : '',
