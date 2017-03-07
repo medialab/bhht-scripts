@@ -200,7 +200,7 @@ async.series([
               id,
               rowsIndex[id].name,
               data[id].count.count,
-              data[id].minorEditCount.count
+              data[id].minorEditCount ? data[id].minorEditCount.count : 0
             ];
 
             output.write(writeRow(line) + '\n');
