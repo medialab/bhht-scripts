@@ -102,8 +102,8 @@ let CONNECTION;
 
 function connect() {
   CONNECTION = mysql.createConnection({
-    host: 'enwiki.labsdb',
-    database: 'enwiki_p',
+    host: `${CONFIG.lang}wiki.labsdb`,
+    database: `${CONFIG.lang}wiki_p`,
     user: CONFIG.user,
     password: CONFIG.password,
     supportBigNumbers: true,
@@ -205,7 +205,7 @@ async.series([
           // Writing to output stream
           for (const id in data) {
             const line = [
-              'en',
+              CONFIG.lang,
               id,
               rowsIndex[id].name,
               data[id].count.count,
