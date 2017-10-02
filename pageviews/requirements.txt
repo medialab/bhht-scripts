@@ -1,4 +1,5 @@
 # Dependencies
 aiofiles
 aiohttp
+aiodns
 requests

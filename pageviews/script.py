@@ -19,7 +19,7 @@ import helpers
 # Parameters
 START_DATE = 20160101
 END_DATE = 20161231
-CHUNK_SIZE = 50
+CHUNK_SIZE = 10
 CONCURRENCY = CHUNK_SIZE
 
 # Constants
