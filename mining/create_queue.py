@@ -75,10 +75,12 @@ print('Location file parsed!')
 already_done = set()
 
 bar = ProgressBar(max_value=len(df))
+duplicates = 0
 
 for i, row in bar(df.iterrows()):
 
     if row['location'] in already_done:
+        duplicates += 1
         continue
 
     location_collection.insert({
@@ -89,4 +91,4 @@ for i, row in bar(df.iterrows()):
 
     already_done.add(row['location'])
 
-print('Locations inserted into MongoDB queue!')
+print('Locations inserted into MongoDB queue! (Found %i duplicates)' % duplicates)
