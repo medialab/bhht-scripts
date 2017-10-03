@@ -10,6 +10,7 @@ from config import DATA, MONGODB
 import pandas as pd
 from progressbar import ProgressBar
 from pymongo import MongoClient
+from pymongo.errors import BulkWriteError
 
 # Constants
 LANGUAGES_COLUMNS = [
@@ -44,6 +45,7 @@ df = pd.read_csv(DATA['people'], usecols=range(9), dtype={i: str for i in range(
 print('People file parsed!')
 
 bar = ProgressBar(max_value=len(df))
+duplicates = 0
 
 for i, row in bar(df.iterrows()):
     items = []
@@ -57,9 +59,12 @@ for i, row in bar(df.iterrows()):
                 'done': False
             })
 
-    people_collection.insert_many(items, ordered=False)
+    try:
+        people_collection.insert_many(items, ordered=False)
+    except BulkWriteError as e:
+        duplicates += 1
 
-print('People inserted into MongoDB queue!')
+print('People inserted into MongoDB queue! (Found %i duplicates)' % duplicates)
 
 # Read the location file
 df = pd.read_csv(DATA['location'], usecols=[0], dtype={0: str}, engine='c')
