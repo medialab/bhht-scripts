@@ -39,7 +39,7 @@ people_collection.create_index('done')
 location_collection.create_index('done')
 
 # Read the people file
-df = pd.read_csv(DATA['people'], usecols=range(9), dtype={i: str for i in range(9)}, engine='c', nrows=1000)
+df = pd.read_csv(DATA['people'], usecols=range(9), dtype={i: str for i in range(9)}, engine='c')
 
 print('People file parsed!')
 
@@ -62,7 +62,7 @@ for i, row in bar(df.iterrows()):
 print('People inserted into MongoDB queue!')
 
 # Read the location file
-df = pd.read_csv(DATA['location'], usecols=[0], dtype={0: str}, engine='c', nrows=1000)
+df = pd.read_csv(DATA['location'], usecols=[0], dtype={0: str}, engine='c')
 
 print('Location file parsed!')
 
