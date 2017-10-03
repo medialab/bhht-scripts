@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =========================
-# HBBT Wikipedia API Script
+# BHHT Wikipedia API Script
 # =========================
 #
 # Simple script aiming at hitting the Wikipedia analytics API to gather
