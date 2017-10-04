@@ -15,4 +15,8 @@ collection = db.people
 
 doc = collection.find_one({'html': {'$exists': True}})
 
-print(zlib.decompress(doc['html']).decode('utf-8'))
+compressed = doc['html']
+uncompressed = zlib.decompress(doc['html']).decode('utf-8')
+
+print('Size compressed', len(compressed))
+print('Size uncompressed', len(uncompressed))
