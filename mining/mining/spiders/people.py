@@ -1,4 +1,5 @@
 import scrapy
+import logging
 from pymongo import MongoClient
 from config import MONGODB
 
@@ -15,9 +16,13 @@ class PeopleSpider(scrapy.Spider):
     name = 'people'
 
     def start_requests(self):
-        for doc in collection.find({'done': False}, limit=10):
+        for doc in collection.find({'done': False}, limit=10 * 1000):
+            url = wikipedia_url(doc['lang'], doc['name'])
+
+            logging.info(url)
+
             yield scrapy.Request(
-                url=wikipedia_url(doc['lang'], doc['name']),
+                url=url,
                 meta={
                     'name': doc['name'],
                     'lang': doc['lang']
