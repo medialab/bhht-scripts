@@ -27,10 +27,18 @@ class MongoPipeline(object):
     def process_item(self, item, spider):
         collection = self.collections[item['model']]
 
+        _id = hasher(item['lang'], item['name'])
+
         # TODO: update done
-        collection.update_one(
-            {'_id': hasher(item['lang'], item['name'])},
-            {'$set': {'html': Binary(item['html'].encode('zip'))}}
-        )
+        if item['notFound']:
+            collection.update_one(
+                {'_id': hasher(item['lang'], item['name'])},
+                {'$set': {'notFound': True}}
+            )
+        else:
+            collection.update_one(
+                {'_id': hasher(item['lang'], item['name'])},
+                {'$set': {'html': Binary(item['html'].encode('zip'))}}
+            )
 
         return item

@@ -36,8 +36,10 @@ location_collection = db.location
 # Ensuring indices
 people_collection.create_index('lang')
 people_collection.create_index('done')
+people_collection.create_index('notFound')
 
 location_collection.create_index('done')
+location_collection.create_index('notFound')
 
 # Read the people file
 df = pd.read_csv(DATA['people'], usecols=range(9), dtype={i: str for i in range(9)}, engine='c')
