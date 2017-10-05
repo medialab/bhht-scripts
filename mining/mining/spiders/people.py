@@ -34,17 +34,33 @@ class PeopleSpider(scrapy.Spider):
     handle_httpstatus_list = [404]
 
     def start_requests(self):
-        for doc in collection.find(QUERY, limit=1000 * 1000):
-            url = wikipedia_url(doc['lang'], doc['name'])
+        self.cursor = collection.find(QUERY, limit=1000 * 1000, no_cursor_timeout=True)
 
-            yield scrapy.Request(
-                url=url,
-                meta={
-                    'name': doc['name'],
-                    'lang': doc['lang']
-                },
-                callback=self.parse
-            )
+        try:
+            for doc in self.cursor:
+                url = wikipedia_url(doc['lang'], doc['name'])
+
+                yield scrapy.Request(
+                    url=url,
+                    meta={
+                        'name': doc['name'],
+                        'lang': doc['lang']
+                    },
+                    callback=self.parse
+                )
+        except:
+            logging.info('Closing MongoDB cusor.')
+            self.cursor.close()
+            raise
+
+        logging.info('Closing MongoDB cusor.')
+        cursor.close()
+
+    def closed(self, reason):
+
+        if self.cursor:
+            logging.info('Closing MongoDB cusor.')
+            self.cursor.close()
 
     def parse(self, response):
         logging.info(u'%i, %s' % (response.status, response.url))
