@@ -30,16 +30,15 @@ class MongoPipeline(object):
 
         _id = hasher(item['lang'], item['name'])
 
-        # TODO: update done
         if item['notFound']:
             collection.update_one(
                 {'_id': hasher(item['lang'], item['name'])},
-                {'$set': {'notFound': True}}
+                {'$set': {'notFound': True, 'done': True}}
             )
         else:
             collection.update_one(
                 {'_id': hasher(item['lang'], item['name'])},
-                {'$set': {'html': Binary(zlib.compress(item['html']))}}
+                {'$set': {'html': Binary(zlib.compress(item['html'])), 'done': True}}
             )
 
         return item
