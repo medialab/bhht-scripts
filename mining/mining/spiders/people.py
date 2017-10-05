@@ -29,7 +29,7 @@ class PeopleSpider(scrapy.Spider):
     handle_httpstatus_list = [404]
 
     def start_requests(self):
-        for doc in collection.find(QUERY, limit=10 * 1000):
+        for doc in collection.find(QUERY, limit=1000 * 1000):
             url = wikipedia_url(doc['lang'], doc['name'])
 
             yield scrapy.Request(
