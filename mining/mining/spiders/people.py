@@ -1,7 +1,12 @@
+import os
 import scrapy
 import logging
 from pymongo import MongoClient
-from config import MONGODB
+from config import MONGODB, PROXY
+
+if PROXY:
+    os.environ['http_proxy'] = 'http://' + PROXY
+    os.environ['https_proxy'] = 'https://' + PROXY
 
 client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = client.bhht

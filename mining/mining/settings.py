@@ -24,7 +24,7 @@ LOG_LEVEL = 'INFO'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 4
+CONCURRENT_REQUESTS = 2
 
 RETRY_ENABLED = True
 RETRY_TIMES = 2
@@ -34,7 +34,7 @@ RETRY_TIMES = 2
 # See also autothrottle settings and docs
 #DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 4
+CONCURRENT_REQUESTS_PER_DOMAIN = 2
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -82,7 +82,7 @@ AUTOTHROTTLE_START_DELAY = 1.0
 AUTOTHROTTLE_MAX_DELAY = 60.0
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
-AUTOTHROTTLE_TARGET_CONCURRENCY = 4
+AUTOTHROTTLE_TARGET_CONCURRENCY = 2
 # Enable showing throttling stats for every response received:
 # AUTOTHROTTLE_DEBUG = True
 
