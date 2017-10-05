@@ -13,10 +13,11 @@ mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
 collection = db.people
 
-doc = collection.find_one({'html': {'$exists': True}})
+docs = collection.find({'html': {'$exists': True}}, limit=10)
 
-compressed = doc['html']
-uncompressed = zlib.decompress(doc['html']).decode('utf-8')
+# compressed = doc['html']
+# uncompressed = zlib.decompress(doc['html']).decode('utf-8')
 
-print('Size compressed', len(compressed))
-print('Size uncompressed', len(uncompressed))
+for doc in docs:
+    print(doc['lang'], doc['name'])
+    # print(zlib.decompress(doc['html']).decode('utf-8'))
