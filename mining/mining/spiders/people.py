@@ -13,7 +13,7 @@ QUERY = {
         {
             '$or': [
                 {'notFound': {'$exists': False}},
-                {'notFound': True}
+                {'notFound': False}
             ]
         }
     ]

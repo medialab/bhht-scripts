@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import zlib
 from config import MONGODB
 from pymongo import MongoClient
 
@@ -38,7 +39,7 @@ class MongoPipeline(object):
         else:
             collection.update_one(
                 {'_id': hasher(item['lang'], item['name'])},
-                {'$set': {'html': Binary(item['html'].encode('zip'))}}
+                {'$set': {'html': Binary(zlib.compress(item['html']))}}
             )
 
         return item
