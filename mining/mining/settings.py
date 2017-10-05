@@ -24,7 +24,7 @@ LOG_LEVEL = 'INFO'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 2
+CONCURRENT_REQUESTS = 16
 
 RETRY_ENABLED = True
 RETRY_TIMES = 2
