@@ -70,13 +70,15 @@ class PeopleSpider(scrapy.Spider):
                 'model': 'people',
                 'name': response.meta['name'],
                 'lang': response.meta['lang'],
-                'notFound': True
+                'notFound': True,
+                'badRequest': False
             }
         elif response.status == 400:
             yield {
                 'model': 'people',
                 'name': response.meta['name'],
                 'lang': response.meta['lang'],
+                'notFound': False,
                 'badRequest': True
             }
         else:
@@ -85,5 +87,6 @@ class PeopleSpider(scrapy.Spider):
                 'name': response.meta['name'],
                 'lang': response.meta['lang'],
                 'html': response.body,
-                'notFound': False
+                'notFound': False,
+                'badRequest': False
             }
