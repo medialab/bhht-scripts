@@ -35,6 +35,11 @@ class MongoPipeline(object):
                 {'_id': hasher(item['lang'], item['name'])},
                 {'$set': {'notFound': True, 'done': True}}
             )
+        elif item['badRequest']:
+            collection.update_one(
+                {'_id': hasher(item['lang'], item['name'])},
+                {'$set': {'badRequest': True, 'done': True}}
+            )
         else:
             collection.update_one(
                 {'_id': hasher(item['lang'], item['name'])},

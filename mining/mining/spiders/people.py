@@ -31,7 +31,7 @@ def wikipedia_url(lang, name):
 
 class PeopleSpider(scrapy.Spider):
     name = 'people'
-    handle_httpstatus_list = [404]
+    handle_httpstatus_list = [400, 404]
 
     def start_requests(self):
         self.cursor = collection.find(QUERY, limit=1000 * 1000, no_cursor_timeout=True)
@@ -71,6 +71,13 @@ class PeopleSpider(scrapy.Spider):
                 'name': response.meta['name'],
                 'lang': response.meta['lang'],
                 'notFound': True
+            }
+        elif response.status == 400:
+            yield {
+                'model': 'people',
+                'name': response.meta['name'],
+                'lang': response.meta['lang'],
+                'badRequest': True
             }
         else:
             yield {
