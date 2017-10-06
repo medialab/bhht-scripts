@@ -54,7 +54,7 @@ class PeopleSpider(scrapy.Spider):
             raise
 
         logging.info('Closing MongoDB cusor.')
-        cursor.close()
+        self.cursor.close()
 
     def closed(self, reason):
 
