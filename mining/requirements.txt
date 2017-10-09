@@ -2,3 +2,4 @@ pymongo
 scrapy
 pandas
 progressbar2
+beautifulsoup4

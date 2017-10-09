@@ -13,3 +13,5 @@ MONGODB = {
     'host': 'localhost',
     'port': 27017
 }
+
+PROCESSORS = 6
