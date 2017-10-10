@@ -125,7 +125,7 @@ def extract_links(doc):
 
     # Debug dump
     with open(u'.log/%s§%s.txt' % (doc['lang'], doc['name']), 'w') as file:
-        for link in relevant_links:
+        for link in sorted(relevant_links):
             file.write(link + '\n')
 
     return True
