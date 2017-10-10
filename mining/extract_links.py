@@ -12,7 +12,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from progressbar import ProgressBar
 from multiprocessing import Pool
-from config import DATA, PROCESSORS, MONGODB
+from config import DEBUG, DATA, PROCESSORS, MONGODB
 from pymongo import MongoClient
 
 # Tests:
@@ -120,6 +120,10 @@ def extract_links(doc):
 
         relevant_links.add(href)
 
+    if not DEBUG:
+        return True
+
+    # Debug dump
     with open(u'.log/%s§%s.txt' % (doc['lang'], doc['name']), 'w') as file:
         for link in relevant_links:
             file.write(link + '\n')

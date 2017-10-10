@@ -2,6 +2,8 @@
 # BHHT Mining Configuration
 # =========================
 #
+DEBUG = False
+
 PROXY = None
 
 DATA = {
