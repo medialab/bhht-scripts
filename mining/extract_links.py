@@ -73,7 +73,9 @@ def is_bad_parent(parent):
     return False
 
 # Process
-def extract_links(doc):
+def extract_links(_id):
+
+    doc = collection.find_one({'_id': _id})
 
     # TODO: add a links filter here for good measure
     if (
@@ -143,7 +145,7 @@ if __name__ == '__main__':
 
         nb_docs = collection.count(QUERY)
 
-        cursor = collection.find(QUERY, no_cursor_timeout=True)
+        cursor = collection.find(QUERY, {'_id': 1}, no_cursor_timeout=True)
 
         # TODO: move payload fetching to worker
         # Cleanup
@@ -157,7 +159,9 @@ if __name__ == '__main__':
 
         bar = ProgressBar(max_value=nb_docs)
 
-        for doc in bar(pool.imap_unordered(extract_links, cursor, chunksize=10)):
+        id_iterator = (doc['_id'] for doc in cursor)
+
+        for doc in bar(pool.imap_unordered(extract_links, id_iterator, chunksize=10)):
             pass
 
         print('Closing the cursor...')
