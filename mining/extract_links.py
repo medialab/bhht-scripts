@@ -28,7 +28,7 @@ for _, row in df.iterrows():
     LOCATIONS.add(row['location'])
 
 # Mongo connection
-mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
+mongo_client = MongoClient(MONGODB['host'], MONGODB['port'], connect=False)
 db = mongo_client.bhht
 collection = db.people
 
@@ -120,6 +120,12 @@ def extract_links(doc):
 
         relevant_links.add(href)
 
+    # Updating the document
+    collection.update_one(
+        {'_id': doc['_id']},
+        {'$set': {'links': list(relevant_links)}}
+    )
+
     if not DEBUG:
         return True
 
@@ -135,11 +141,11 @@ if __name__ == '__main__':
 
     with Pool(processes=PROCESSORS) as pool:
 
-        # TODO: predicate
         nb_docs = collection.count(QUERY)
 
         cursor = collection.find(QUERY, no_cursor_timeout=True)
 
+        # TODO: move payload fetching to worker
         # Cleanup
         def sigint_handler(signal, frame):
             print('Closing the cursor...')
