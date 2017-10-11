@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
         bar = ProgressBar(max_value=nb_docs)
 
-        for doc in bar(pool.imap_unordered(extract_links, cursor)):
+        for doc in bar(pool.imap_unordered(extract_links, cursor, chunksize=10)):
             pass
 
         print('Closing the cursor...')
