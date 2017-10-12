@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# ========================
-# BHHT Create Queue Script
-# ========================
+# ===============================
+# BHHT Create People Queue Script
+# ===============================
 #
-# Script loading the necessary pages from the ES index and initializing the
-# MongoDB queue.
+# Script loading the necessary pages from the people CSV file and initializing
+# the MongoDB queue.
 #
 from config import DATA, MONGODB
 import pandas as pd
@@ -28,20 +28,15 @@ hasher = lambda lang, name: '%s§%s' % (lang, name)
 
 # Mongo connection
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
-mongo_client.drop_database('bhht')
 db = mongo_client.bhht
+db.drop_collection('people')
 people_collection = db.people
-location_collection = db.location
 
 # Ensuring indices
 people_collection.create_index('lang')
 people_collection.create_index('done')
 people_collection.create_index('notFound')
 people_collection.create_index('badRequest')
-
-location_collection.create_index('done')
-location_collection.create_index('notFound')
-location_collection.create_index('badRequest')
 
 # Read the people file
 df = pd.read_csv(DATA['people'], usecols=range(9), dtype={i: str for i in range(9)}, engine='c')
@@ -69,30 +64,3 @@ for i, row in bar(df.iterrows()):
         duplicates += 1
 
 print('People inserted into MongoDB queue! (Found %i duplicates)' % duplicates)
-
-# Read the location file
-df = pd.read_csv(DATA['location'], usecols=[0], dtype={0: str}, engine='c')
-
-print('Location file parsed!')
-
-# TODO: the file has duplicate values
-already_done = set()
-
-bar = ProgressBar(max_value=len(df))
-duplicates = 0
-
-for i, row in bar(df.iterrows()):
-
-    if row['location'] in already_done:
-        duplicates += 1
-        continue
-
-    location_collection.insert({
-        '_id': row['location'],
-        'name': row['location'],
-        'done': False
-    })
-
-    already_done.add(row['location'])
-
-print('Locations inserted into MongoDB queue! (Found %i duplicates)' % duplicates)
