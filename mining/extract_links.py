@@ -76,7 +76,7 @@ def is_bad_parent(parent):
 # Process
 def extract_links(_id):
 
-    doc = collection.find_one({'_id': _id})
+    doc = collection.find_one({'_id': _id}, {'links': 0})
 
     # TODO: add a links filter here for good measure
     if (
