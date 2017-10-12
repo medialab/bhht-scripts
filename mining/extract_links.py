@@ -9,6 +9,7 @@ import sys
 import signal
 import zlib
 import pandas as pd
+from collections import defaultdict
 from bs4 import BeautifulSoup
 from progressbar import ProgressBar
 from multiprocessing import Pool
@@ -20,12 +21,12 @@ from pymongo import MongoClient
 #   en§Julius_Caesar (gallery)
 
 # Building the location set
-df = pd.read_csv(DATA['location'], usecols=[0], dtype={0: str}, engine='c')
+df = pd.read_csv(DATA['location'], usecols=[0, 3], dtype={0: str, 3: str}, engine='c')
 
-LOCATIONS = set()
+LOCATIONS = defaultdict(set)
 
 for _, row in df.iterrows():
-    LOCATIONS.add(row['location'])
+    LOCATIONS[row['lang']].add(row['location'])
 
 # Mongo connection
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'], connect=False)
@@ -91,6 +92,7 @@ def extract_links(_id):
     all_links = content.find_all('a')
 
     relevant_links = set()
+    relevant_locations = LOCATIONS[doc['lang']]
 
     for link in all_links:
         href = link.get('href')
@@ -113,7 +115,7 @@ def extract_links(_id):
             continue
 
         # Keeping only locations
-        if href not in LOCATIONS:
+        if href not in relevant_locations:
             continue
 
         # Avoiding navs
@@ -147,7 +149,6 @@ if __name__ == '__main__':
 
         cursor = collection.find(QUERY, {'_id': 1}, no_cursor_timeout=True)
 
-        # TODO: move payload fetching to worker
         # Cleanup
         def sigint_handler(signal, frame):
             print('Closing the cursor...')
