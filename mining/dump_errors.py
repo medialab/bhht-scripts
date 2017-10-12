@@ -13,18 +13,19 @@ from config import MONGODB
 from pymongo import MongoClient
 
 # Arguments
-if len(sys.argv) < 2:
-    raise Exception('$1: expecting an output folder.')
+if len(sys.argv) < 3:
+    raise Exception('$1 $2: [model] [output-folder]')
 
-output = sys.argv[1]
+model = sys.argv[1]
+output = sys.argv[2]
 
 # Mongo connection
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
-collection = db.people
+collection = db[model]
 
-NOT_FOUND_PATH = os.path.join(output, 'not-found.csv')
-BAD_REQUEST_PATH = os.path.join(output, 'bad-request.csv')
+NOT_FOUND_PATH = os.path.join(output, '%s-not-found.csv' % model)
+BAD_REQUEST_PATH = os.path.join(output, '%s-bad-request.csv' % model)
 
 # Dumping 404
 print('Dumping `not found`...')
