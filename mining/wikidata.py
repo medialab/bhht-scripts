@@ -15,7 +15,7 @@ mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
 collection = db.location
 
-for doc in collection.find({'done': True}):
+for doc in collection.find({'done': True, 'wikidata': {'$exists': False}}, {'html': 0}):
     page = wptools.page(doc['name'], lang=doc['lang'])
 
     try:
