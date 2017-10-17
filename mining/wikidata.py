@@ -16,12 +16,16 @@ db = mongo_client.bhht
 collection = db.location
 
 for doc in collection.find({'done': True, 'wikidata': {'$exists': False}}, {'html': 0}):
+    if 'wikidata' in doc and doc['wikidata'] is None:
+        continue
+
     page = wptools.page(doc['name'], lang=doc['lang'])
 
     try:
         data = page.get_wikidata().data
     except LookupError:
         print('Could not lookup %s' % doc['_id'])
+        collection.update_one({'_id': doc['_id']}, {'$set': {'wikidata': None}})
         continue
 
     payload = {'wikidata': data['wikidata']}
