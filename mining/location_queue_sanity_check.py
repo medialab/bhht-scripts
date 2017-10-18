@@ -6,6 +6,7 @@
 # Script loading the necessary pages from the location CSV file and
 # initializing the MongoDB queue.
 #
+import json
 from config import DATA, MONGODB
 import pandas as pd
 from progressbar import ProgressBar
@@ -18,13 +19,7 @@ hasher = lambda lang, name: '%s§%s' % (lang, name)
 # Mongo connection
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
-# db.drop_collection('location')
 location_collection = db.location
-
-# Ensuring indices
-location_collection.create_index('done')
-location_collection.create_index('notFound')
-location_collection.create_index('badRequest')
 
 # Read the location file
 df = pd.read_csv(DATA['location'], usecols=[0, 3], dtype={0: str, 3: str}, engine='c')
@@ -33,15 +28,15 @@ print('Location file parsed!')
 
 bar = ProgressBar(max_value=len(df))
 
-# Iterating over a shuffled version of the frame to generate entropy for the crawls
-for i, row in bar(df.sample(frac=1).iterrows()):
-    _id = hasher(row['lang'], row['location'])
+FILE_LOCATIONS = set()
 
-    location_collection.replace_one({'_id': _id}, {
-        '_id': _id,
-        'name': row['location'],
-        'lang': row['lang'],
-        'done': False
-    }, upsert=True)
+for i, row in df.iterrows():
+    FILE_LOCATIONS.add(hasher(row['lang'], row['location']))
 
-print('Locations inserted into MongoDB queue!')
+DISAPPEARED_LOCATIONS = []
+
+for doc in location_collection.find({}, {'html': 0}):
+    if hasher(doc['lang'], doc['name']) not in FILE_LOCATIONS:
+        DISAPPEARED_LOCATIONS.append((doc['lang'], doc['name']))
+
+print(json.dumps(sorted(DISAPPEARED_LOCATIONS), ensure_ascii=False))
