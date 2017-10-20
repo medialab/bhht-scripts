@@ -25,6 +25,9 @@ from pymongo import MongoClient
 if len(sys.argv) < 2:
     raise Exception('$1: [locations-sets-path]')
 
+# NOTE: locations sets are stored in a binary messagepack file created
+# by the `dump_location_sets` scripts and do not include people pages
+# incorrectly tagged as locations
 LOCATION_SETS_PATH = sys.argv[1]
 LOCATIONS = None
 
