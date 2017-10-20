@@ -19,6 +19,7 @@ from pymongo import MongoClient
 # Tests:
 #   en§Alexander_the_Great (iconography)
 #   en§Julius_Caesar (gallery)
+#   en§Desiderius_Erasmus (iconography)
 
 # Arguments
 if len(sys.argv) < 2:
