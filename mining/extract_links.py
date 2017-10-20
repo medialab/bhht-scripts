@@ -8,7 +8,7 @@
 import sys
 import signal
 import zlib
-import pandas as pd
+import msgpack
 from collections import defaultdict
 from bs4 import BeautifulSoup
 from progressbar import ProgressBar
@@ -20,13 +20,19 @@ from pymongo import MongoClient
 #   en§Alexander_the_Great (iconography)
 #   en§Julius_Caesar (gallery)
 
+# Arguments
+if len(sys.argv) < 2:
+    raise Exception('$1: [locations-sets-path]')
+
+LOCATION_SETS_PATH = sys.argv[1]
+LOCATIONS = None
+
 # Building the location set
-df = pd.read_csv(DATA['location'], usecols=[0, 3], dtype={0: str, 3: str}, engine='c')
+with open(LOCATION_SETS_PATH, 'rb') as f:
+    LOCATIONS = msgpack.unpackb(f.read(), use_list=False, encoding='utf-8')
 
-LOCATIONS = defaultdict(set)
-
-for _, row in df.iterrows():
-    LOCATIONS[row['lang']].add(row['location'])
+for lang in LOCATIONS:
+    LOCATIONS[lang] = frozenset(LOCATIONS[lang])
 
 # Mongo connection
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'], connect=False)
@@ -76,7 +82,7 @@ def is_bad_parent(parent):
 # Process
 def extract_links(_id):
 
-    doc = collection.find_one({'_id': _id}, {'links': 0})
+    doc = collection.find_one({'_id': _id}, {'links': 0})
 
     # TODO: add a links filter here for good measure
     if (

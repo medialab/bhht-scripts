@@ -4,3 +4,4 @@ pandas
 progressbar2
 beautifulsoup4
 wptools
+msgpack-python
