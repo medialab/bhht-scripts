@@ -34,7 +34,7 @@ class LocationSpider(scrapy.Spider):
     handle_httpstatus_list = [400, 404]
 
     def start_requests(self):
-        self.cursor = collection.find(QUERY, limit=1000 * 1000, no_cursor_timeout=True)
+        self.cursor = collection.find(QUERY, {'html': 0}, limit=1000 * 1000, no_cursor_timeout=True)
 
         try:
             for doc in self.cursor:

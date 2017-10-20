@@ -37,6 +37,7 @@ bar = ProgressBar(max_value=len(df))
 for i, row in bar(df.sample(frac=1).iterrows()):
     _id = hasher(row['lang'], row['location'])
 
+    # NOTE: this should not be a replace_one here. It erased the html pages!
     location_collection.replace_one({'_id': _id}, {
         '_id': _id,
         'name': row['location'],
