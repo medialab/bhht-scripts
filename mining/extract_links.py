@@ -51,6 +51,8 @@ def is_bad_parent(parent):
 
     # Handling some more references
     if parent.name == 'li':
+
+        # Citations
         parent_id = parent.get('id')
 
         if not parent_id:
@@ -127,6 +129,15 @@ def extract_links(_id):
 
         # Avoiding navs
         if any(is_bad_parent(parent) for parent in link.parents):
+            continue
+
+        # Avoiding places where we have external siblings
+        parent_list = link.find_parent(['ul', 'ol'])
+
+        if (
+            (parent_list and parent_list.find('a', class_='external')) or
+            (parent_list and parent_list.find('a', attrs={'rel': 'nofollow'}))
+        ):
             continue
 
         relevant_links.add(href)
