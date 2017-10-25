@@ -30,6 +30,11 @@ class MongoPipeline(object):
 
         _id = hasher(item['lang'], item['name'])
 
+        if 'type' in item and item['type'] == 'wikidata':
+
+            print(item)
+            return item
+
         if item['notFound']:
             collection.update_one(
                 {'_id': hasher(item['lang'], item['name'])},
