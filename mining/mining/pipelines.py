@@ -44,7 +44,7 @@ class MongoPipeline(object):
 
             collection.update_one(
                 {'_id': _id},
-                {'$set': {'wikidata': item['wikidata']}}
+                {'$set': {'wikidata': item['wikidata'], 'done': True}}
             )
 
             return item
