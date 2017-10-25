@@ -22,11 +22,20 @@ class MongoPipeline(object):
 
         self.collections = {
             'people': self.db.people,
-            'location': self.db.location
+            'location': self.db.location,
+            'entities': self.db.entities
         }
 
     def process_item(self, item, spider):
         collection = self.collections[item['model']]
+
+        if item['model'] == 'entities':
+            collection.update_one(
+                {'_id': item['_id']},
+                {'$set': {'labels': item['labels']}}
+            )
+
+            return item
 
         _id = hasher(item['lang'], item['name'])
 
