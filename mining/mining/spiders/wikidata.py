@@ -56,9 +56,14 @@ def wikidata_url(lang, name):
 
 def collect_claims(claims, prop):
     if prop != 'P625':
-        return [claim['mainsnak']['datavalue']['value']['id'] for claim in claims[prop]]
+        return [claim['mainsnak']['datavalue']['value']['id'] for claim in claims[prop] if claim['mainsnak']['snaktype'] != 'novalue']
     else:
-        data = claims[prop][0]['mainsnak']['datavalue']['value']
+        first_claim = claims[prop][0]['mainsnak']
+
+        if first_claim['snaktype'] == 'novalue':
+            return None
+
+        data = first_claim['datavalue']['value']
 
         return {
             'lat': data['latitude'],
@@ -87,7 +92,10 @@ def parse_response(response):
             if prop not in LABELS:
                 continue
 
-            wikidata[LABELS[prop]] = collect_claims(entity_data['claims'], prop)
+            claim_data = collect_claims(entity_data['claims'], prop)
+
+            if claim_data and len(claim_data) > 0:
+                wikidata[LABELS[prop]] = claim_data
 
         if len(wikidata) < 1:
             return None
