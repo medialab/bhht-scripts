@@ -30,25 +30,38 @@ class MongoPipeline(object):
 
         _id = hasher(item['lang'], item['name'])
 
+        # Wikidata
         if 'type' in item and item['type'] == 'wikidata':
 
-            print(item)
+            collection.update_one(
+                {'_id': _id},
+                {'$set': {'wikidata': item['wikidata']}}
+            )
+
             return item
 
+        # Not Found
         if item['notFound']:
             collection.update_one(
-                {'_id': hasher(item['lang'], item['name'])},
+                {'_id': _id},
                 {'$set': {'notFound': True, 'done': True}}
             )
-        elif item['badRequest']:
+
+            return item
+
+        # Bad Request
+        if item['badRequest']:
             collection.update_one(
-                {'_id': hasher(item['lang'], item['name'])},
+                {'_id': _id},
                 {'$set': {'badRequest': True, 'done': True}}
             )
-        else:
-            collection.update_one(
-                {'_id': hasher(item['lang'], item['name'])},
-                {'$set': {'html': Binary(zlib.compress(item['html'])), 'done': True}}
-            )
+
+            return item
+
+        # HTML
+        collection.update_one(
+            {'_id': _id},
+            {'$set': {'html': Binary(zlib.compress(item['html'])), 'done': True}}
+        )
 
         return item

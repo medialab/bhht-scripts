@@ -30,6 +30,18 @@ LANGS = [
     'sv'
 ]
 
+LABELS = {
+    'P17': 'country',
+    'P30': 'continent',
+    'P31': 'instance',
+
+    'P276': 'location',
+    'P279': 'subclass',
+
+    'P625': 'coordinates',
+    'P910': 'category'
+}
+
 BASE_URL = 'https://www.wikidata.org/w/api.php?action=wbgetentities&format=json'
 
 
@@ -42,6 +54,19 @@ def wikidata_url(lang, name):
     }
 
 
+def collect_claims(claims, prop):
+    if prop != 'P625':
+        return [claim['mainsnak']['datavalue']['value']['id'] for claim in claims[prop]]
+    else:
+        data = claims[prop][0]['mainsnak']['datavalue']['value']
+
+        return {
+            'lat': data['latitude'],
+            'lon': data['longitude'],
+            'precision': data['precision'],
+            'altitude': data['altitude']
+        }
+
 def parse_response(response):
     try:
         wikidata = {}
@@ -53,9 +78,16 @@ def parse_response(response):
             return None
 
         entity_data = data['entities'][entity]
+        wikidata['id'] = entity_data['id']
 
         if 'aliases' in entity_data and len(entity_data['aliases']) > 0:
-            wikidata['aliases'] = entity_data['aliases']
+            wikidata['aliases'] = {lang: [alias['value'] for alias in aliases] for lang, aliases in entity_data['aliases'].items()}
+
+        for prop in entity_data['claims']:
+            if prop not in LABELS:
+                continue
+
+            wikidata[LABELS[prop]] = collect_claims(entity_data['claims'], prop)
 
         if len(wikidata) < 1:
             return None
@@ -70,7 +102,7 @@ class LocationSpider(scrapy.Spider):
     handle_httpstatus_list = [404]
 
     def start_requests(self):
-        self.cursor = collection.find(QUERY, {'lang': 1, 'name': 1}, limit=30, skip=1000, no_cursor_timeout=True)
+        self.cursor = collection.find(QUERY, {'lang': 1, 'name': 1}, no_cursor_timeout=True)
 
         try:
             for doc in self.cursor:
