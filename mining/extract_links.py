@@ -103,7 +103,7 @@ def extract_links(_id):
     content = soup.find(id='content')
     all_links = content.find_all('a')
 
-    relevant_links = set()
+    relevant_links = []
     relevant_locations = LOCATIONS[doc['lang']]
 
     for link in all_links:
@@ -143,12 +143,12 @@ def extract_links(_id):
         ):
             continue
 
-        relevant_links.add(href)
+        relevant_links.append(href)
 
     # Updating the document
     collection.update_one(
         {'_id': doc['_id']},
-        {'$set': {'links': list(relevant_links)}}
+        {'$set': {'links': relevant_links}}
     )
 
     if not DEBUG:
@@ -156,7 +156,7 @@ def extract_links(_id):
 
     # Debug dump
     with open(u'.log/%s§%s.txt' % (doc['lang'], doc['name']), 'w') as file:
-        for link in sorted(relevant_links):
+        for link in relevant_links:
             file.write(link + '\n')
 
     return True
