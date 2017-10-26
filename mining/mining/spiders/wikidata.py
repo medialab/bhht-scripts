@@ -34,11 +34,6 @@ LABELS = {
     'P17': 'country',
     'P30': 'continent',
     'P31': 'instance',
-
-    # TODO: are those useful?
-    'P276': 'location',
-    'P279': 'subclass',
-
     'P625': 'coordinates',
     'P910': 'category'
 }
