@@ -51,12 +51,20 @@ for i, row in bar(df.iterrows()):
 
     for column, prop in LANGUAGES_COLUMNS:
         if pd.notnull(row[column]):
-            items.append({
+            data = {
                 '_id': hasher(prop, row[column]),
                 'lang': prop,
                 'name': row[column],
                 'done': False
-            })
+            }
+
+            if pd.notnull(row['estimated_birth']):
+                data['estimatedBirthDate'] = int(row['estimated_birth'])
+
+            if pd.notnull(row['estimated_death']):
+                data['estimatedDeathDate'] = int(row['estimated_death'])
+
+            items.append(data)
 
     try:
         people_collection.insert_many(items, ordered=False)

@@ -70,6 +70,7 @@ print('Indexing entities...')
 for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
     label = None
 
+    # We try to find a suitable label in lang order
     for lang in LANGS:
         if lang in entity['labels']:
             label = entity['labels'][lang]

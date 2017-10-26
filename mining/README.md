@@ -77,6 +77,9 @@ scrapy crawl location
 
 # Dumping the location sets in binary format (needed by link extraction)
 ./dump_location_sets.py [output-folder]
+
+# Dumping the datascape mined files
+./dump_datascape_files.py [output-folder]
 ```
 
 ### Extraction
@@ -85,4 +88,13 @@ To run the link extraction (you will need to compute the binary location sets be
 
 ```
 ./extract_links.py [locations-sets-path]
+```
+
+### Patching
+
+To run some patches (should not be necessary if you start from scratch).
+
+```
+# Patching people collection with additional info
+./patch_people_queue.py
 ```
