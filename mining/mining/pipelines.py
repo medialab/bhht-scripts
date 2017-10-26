@@ -29,7 +29,7 @@ class MongoPipeline(object):
         if item['model'] == 'entities':
             collection.update_one(
                 {'_id': item['_id']},
-                {'$set': {'labels': item['labels']}}
+                {'$set': {'labels': item['labels'], 'done': True}}
             )
 
             return item
@@ -41,7 +41,7 @@ class MongoPipeline(object):
 
             collection.update_one(
                 {'_id': _id},
-                {'$set': {'wikidata': item['wikidata'], 'done': True}}
+                {'$set': {'wikidata': item['wikidata']}}
             )
 
             return item
