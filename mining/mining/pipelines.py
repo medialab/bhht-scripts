@@ -8,9 +8,6 @@ try:
 except:
     from bson.binary import Binary
 
-client = MongoClient(MONGODB['host'], MONGODB['port'])
-db = client.bhtt
-
 
 hasher = lambda lang, name: u'%s§%s' % (lang, name)
 
