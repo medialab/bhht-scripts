@@ -32,7 +32,15 @@ SETS = defaultdict(list)
 
 bar = ProgressBar(max_value=collection.count({}))
 
-for doc in bar(collection.find({}, {'lang': 1, 'name': 1})):
+for doc in bar(collection.find({}, {'lang': 1, 'name': 1, 'badRequest': 1, 'notFound': 1})):
+
+    # Filtering bad apples
+    if 'notFound' in doc and doc['notFound']:
+        continue
+
+    if 'badRequest' in doc and doc['badRequest']:
+        continue
+
     if not people.count({'_id': hasher(doc['lang'], doc['name'])}):
         SETS[doc['lang']].append(doc['name'])
 
