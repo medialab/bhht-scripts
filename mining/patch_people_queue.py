@@ -52,12 +52,12 @@ for i, row in bar(df.iterrows()):
 
     update = {'$set': update}
 
+    ids = []
+
     for column, prop in LANGUAGES_COLUMNS:
         if pd.notnull(row[column]):
-            data = {
-                '_id': hasher(prop, row[column])
-            }
+            ids.append(hasher(prop, row[column]))
 
-        people_collection.update_one(data, update)
+    people_collection.update_many({'_id': {'$in': ids}}, update)
 
 print('People patched!')
