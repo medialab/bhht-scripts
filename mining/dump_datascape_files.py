@@ -63,7 +63,7 @@ def collect_entities(index, entities):
     return [index[entity] for entity in entities if entity in index]
 
 def encode_links(year, links):
-    return '§'.join([link + '@' + year for link in links])
+    return '§'.join([link + '|' + year for link in links])
 
 # Arguments
 if len(sys.argv) < 2:
