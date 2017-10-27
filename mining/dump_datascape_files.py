@@ -194,6 +194,7 @@ with open(BASE2_MINED_PATH, 'w') as f:
             'instance': '§'.join(list(instance))
         })
 
+print('Writing path file')
 with open(BASE3_MINED_PATH, 'w') as mf, open(BASE1_PATH, 'r') as pf:
     reader = csv.DictReader(pf)
     writer = csv.DictWriter(mf, fieldnames=['name', 'links'])
