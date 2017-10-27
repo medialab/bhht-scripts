@@ -13,7 +13,7 @@ import urllib.parse as urllib
 import networkx as nx
 from collections import defaultdict
 from progressbar import ProgressBar
-from config import MONGODB
+from config import DATA, MONGODB
 from pymongo import MongoClient
 
 LANGS = [
@@ -25,6 +25,26 @@ LANGS = [
     'pt',
     'sv'
 ]
+
+LABEL_TO_LANG = {
+    'english': 'en',
+    'french': 'fr',
+    'german': 'de',
+    'italian': 'it',
+    'portuguese': 'pt',
+    'spanish': 'es',
+    'swedish': 'sv'
+}
+
+LANG_TO_COLUMN = {
+    'en': 'english_link',
+    'fr': 'french_link',
+    'es': 'spanish_link',
+    'pt': 'portuguese_link',
+    'de': 'german_link',
+    'it': 'italian_link',
+    'sv': 'swedish_link'
+}
 
 # Hasher
 hasher = lambda lang, name: '%s§%s' % (lang, name)
@@ -42,6 +62,9 @@ def flatten_aliases(aliases):
 def collect_entities(index, entities):
     return [index[entity] for entity in entities if entity in index]
 
+def encode_links(year, links):
+    return '§'.join([link + '@' + year for link in links])
+
 # Arguments
 if len(sys.argv) < 2:
     raise Exception('$1: [output-folder]')
@@ -54,7 +77,9 @@ location_collection = db.location
 people_collection = db.people
 entities_collection = db.entities
 
-BASE2_PATH = os.path.join(output, 'base2_locations_mined.csv')
+BASE1_PATH = DATA['people']
+BASE2_MINED_PATH = os.path.join(output, 'base2_locations_mined.csv')
+BASE3_MINED_PATH = os.path.join(output, 'base3_trajectoires_mined.csv')
 
 ALIASES_INDEX = nx.Graph()
 LOCATIONS_INDEX = []
@@ -62,7 +87,7 @@ ENTITIES_INDEX = {}
 
 LOCATION_QUERY = {'done': True}
 ENTITIES_QUERY = {'done': True, 'labels': {'$exists': True}}
-PEOPLE_QUERY = {'done': True, 'links': {'$exists': True}}
+PEOPLE_QUERY = {'done': True}
 
 entities_bar = ProgressBar(max_value=entities_collection.count(ENTITIES_QUERY))
 
@@ -150,7 +175,7 @@ for nodes in nx.connected_components(ALIASES_INDEX):
     data['aliases'] = nodes
 
 print('Writing location file')
-with open(BASE2_PATH, 'w') as f:
+with open(BASE2_MINED_PATH, 'w') as f:
     writer = csv.DictWriter(f, fieldnames=['langs', 'aliases', 'lat', 'lon', 'instance'])
     writer.writeheader()
 
@@ -164,4 +189,33 @@ with open(BASE2_PATH, 'w') as f:
             'lat': coordinates['lat'] if coordinates else '',
             'lon': coordinates['lon'] if coordinates else '',
             'instance': '§'.join(list(instance))
+        })
+
+with open(BASE3_MINED_PATH, 'w') as mf, open(BASE1_PATH, 'r') as pf:
+    reader = csv.DictReader(pf)
+    writer = csv.DictWriter(mf, fieldnames=['name', 'links'])
+    writer.writeheader()
+
+    people_bar = ProgressBar()
+
+    for row in people_bar(reader):
+        main_lang = LABEL_TO_LANG[row['language']]
+        name = row[LANG_TO_COLUMN[main_lang]]
+
+        if not row['estimated_birth'] or row['estimated_birth'] == '.':
+            continue
+
+        _id = hasher(main_lang, name)
+
+        people_doc = people_collection.find_one({'_id': _id})
+
+        if not people_doc:
+            raise Exception('Could not find %s' % _id)
+
+        if 'links' not in people_doc:
+            continue
+
+        writer.writerow({
+            'name': row['name'],
+            'links': encode_links(row['estimated_birth'], people_doc['links'])
         })
