@@ -168,11 +168,14 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
             ALIASES_INDEX.add_edge(source, target)
 
 print('Collapsing location aliases...')
-for nodes in nx.connected_components(ALIASES_INDEX):
-    nodes = list(nodes)
-    component = ALIASES_INDEX.node[nodes[0]]['component']
-    data = LOCATIONS_INDEX[component]
-    data['aliases'] = nodes
+COMPONENTS_INDEX = defaultdict(list)
+
+for alias in ALIASES_INDEX:
+    COMPONENTS_INDEX[ALIASES_INDEX.node[alias]['component']].append(alias)
+
+# NOTE: can be done afterwards if we need to save up some RAM
+for i, component in enumerate(LOCATIONS_INDEX):
+    component['aliases'] = COMPONENTS_INDEX[i]
 
 print('Writing location file')
 with open(BASE2_MINED_PATH, 'w') as f:
