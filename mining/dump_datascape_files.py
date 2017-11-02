@@ -135,7 +135,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
     if matching_alias is None:
         data = {
-            'langs': [location['lang']],
+            'langs': set([location['lang']]),
             'instance': set()
         }
 
@@ -148,7 +148,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         LOCATIONS_INDEX.append(data)
     else:
         data = LOCATIONS_INDEX[component]
-        data['langs'].append(location['lang'])
+        data['langs'].add(location['lang'])
 
         if 'coordinates' not in data and wikidata and 'coordinates' in wikidata:
             data['coordinates'] = wikidata['coordinates']
@@ -187,7 +187,7 @@ with open(BASE2_MINED_PATH, 'w') as f:
         instance = component.get('instance')
 
         writer.writerow({
-            'langs': '§'.join(component['langs']),
+            'langs': '§'.join(list(component['langs'])),
             'aliases': '§'.join(component['aliases']),
             'lat': coordinates['lat'] if coordinates else '',
             'lon': coordinates['lon'] if coordinates else '',
