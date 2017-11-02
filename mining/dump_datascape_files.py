@@ -135,6 +135,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
     if matching_alias is None:
         data = {
+            'aliases': set(aliases),
             'langs': set([location['lang']]),
             'instance': set()
         }
@@ -148,6 +149,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         LOCATIONS_INDEX.append(data)
     else:
         data = LOCATIONS_INDEX[component]
+        data['aliases'].update(aliases)
         data['langs'].add(location['lang'])
 
         if 'coordinates' not in data and wikidata and 'coordinates' in wikidata:
@@ -167,16 +169,6 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
             target = aliases[j]
             ALIASES_INDEX.add_edge(source, target)
 
-print('Collapsing location aliases...')
-COMPONENTS_INDEX = defaultdict(list)
-
-for alias in ALIASES_INDEX:
-    COMPONENTS_INDEX[ALIASES_INDEX.node[alias]['component']].append(alias)
-
-# NOTE: can be done afterwards if we need to save up some RAM
-for i, component in enumerate(LOCATIONS_INDEX):
-    component['aliases'] = COMPONENTS_INDEX[i]
-
 print('Writing location file')
 with open(BASE2_MINED_PATH, 'w') as f:
     writer = csv.DictWriter(f, fieldnames=['langs', 'aliases', 'lat', 'lon', 'instance'])
@@ -188,7 +180,7 @@ with open(BASE2_MINED_PATH, 'w') as f:
 
         writer.writerow({
             'langs': '§'.join(list(component['langs'])),
-            'aliases': '§'.join(component['aliases']),
+            'aliases': '§'.join(list(component['aliases'])),
             'lat': coordinates['lat'] if coordinates else '',
             'lon': coordinates['lon'] if coordinates else '',
             'instance': '§'.join(list(instance))
