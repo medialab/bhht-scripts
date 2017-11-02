@@ -12,7 +12,8 @@ import msgpack
 import urllib.parse as urllib
 import networkx as nx
 from math import radians, cos, sin, asin, sqrt
-from collections import defaultdict
+from statistics import mean
+from collections import defaultdict, Counter
 from progressbar import ProgressBar
 from config import DATA, MONGODB
 from pymongo import MongoClient
@@ -63,6 +64,11 @@ def flatten_aliases(aliases):
 def collect_entities(index, entities):
     return [index[entity] for entity in entities if entity in index]
 
+def score_aliases_set(index, aliases):
+    scores = [index[alias] for alias in aliases]
+
+    return mean(scores)
+
 def encode_links(year, links):
     return '§'.join([link + '|' + year for link in links])
 
@@ -102,6 +108,7 @@ ALIASES_INDEX = nx.Graph()
 LOCATIONS_INDEX = []
 ENTITIES_INDEX = {}
 COORDINATES_INDEX = {}
+SCORES_INDEX = Counter()
 
 LOCATION_QUERY = {'done': True}
 ENTITIES_QUERY = {'done': True, 'labels': {'$exists': True}}
@@ -124,7 +131,7 @@ for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
 
 coordinates_bar = ProgressBar()
 
-print('Indexing coordinates...')
+print('Indexing coordinates & scores...')
 with open(BASE2_PATH) as f:
     reader = csv.DictReader(f)
 
@@ -133,6 +140,8 @@ with open(BASE2_PATH) as f:
             'lat': float(line['lat_href']),
             'lon': float(line['lon_href'])
         }
+
+        SCORES_INDEX[line['location']] += 1
 
 location_bar = ProgressBar(max_value=location_collection.count(LOCATION_QUERY))
 
@@ -176,12 +185,48 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
             # If distance between both points is over 10km, we split
             if d > 10:
-                matching_alias = None
 
-                # TODO: Here we need to edit the aliases set of one of the two:
+                # Solving conflict
+                existing_aliases = LOCATIONS_INDEX[ALIASES_INDEX.node[matching_alias]['component']]['aliases']
+
+                added_score = score_aliases_set(SCORES_INDEX, aliases)
+                existing_score = score_aliases_set(SCORES_INDEX, existing_aliases)
+
+                if added_score > existing_score:
+
+                    # Added wins, we need to erase the existing aliases from the graph and current set
+                    existing_aliases -= set(aliases)
+
+                    for alias in aliases:
+                        ALIASES_INDEX.remove_node(alias)
+
+                else:
+
+                    # Existing wins, we cull the new aliases
+                    aliases = list(set(aliases) - existing_aliases)
+
+                matching_alias = None
         else:
 
             # Better safe than sorry. If we don't have coordinates, we have separate components
+            existing_aliases = LOCATIONS_INDEX[ALIASES_INDEX.node[matching_alias]['component']]['aliases']
+
+            added_score = score_aliases_set(SCORES_INDEX, aliases)
+            existing_score = score_aliases_set(SCORES_INDEX, existing_aliases)
+
+            if added_score > existing_score:
+
+                # Added wins, we need to erase the existing aliases from the graph and current set
+                existing_aliases -= set(aliases)
+
+                for alias in aliases:
+                    ALIASES_INDEX.remove_node(alias)
+
+            else:
+
+                # Existing wins, we cull the new aliases
+                aliases = list(set(aliases) - existing_aliases)
+
             matching_alias = None
 
     # Handling merge normally
