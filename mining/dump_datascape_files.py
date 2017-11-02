@@ -11,6 +11,7 @@ import csv
 import msgpack
 import urllib.parse as urllib
 import networkx as nx
+from math import radians, cos, sin, asin, sqrt
 from collections import defaultdict
 from progressbar import ProgressBar
 from config import DATA, MONGODB
@@ -64,6 +65,20 @@ def collect_entities(index, entities):
 
 def encode_links(year, links):
     return '§'.join([link + '|' + year for link in links])
+
+def haversine(lon1, lat1, lon2, lat2):
+    if lon1 == lon2 and lat1 == lat2:
+        return 0
+
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon/2) ** 2
+    c = 2 * asin(sqrt(a))
+    # Radius of earth in kilometers is 6371
+    km = 6371 * c
+    return km
 
 # Arguments
 if len(sys.argv) < 2:
@@ -146,21 +161,53 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
     matching_alias = next((alias for alias in aliases if alias in ALIASES_INDEX), None)
 
-    component = ALIASES_INDEX.node[matching_alias]['component'] if matching_alias else len(LOCATIONS_INDEX)
+    # Ensuring coordinates consistency
+    if matching_alias:
+        coordinates = COORDINATES_INDEX.get(location['_id'])
 
+        if not coordinates and wikidata and 'coordinates' in wikidata:
+            coordinates = wikidata['coordinates']
+
+        data = LOCATIONS_INDEX[component]
+
+        if coordinates and 'coordinates' in data:
+            d = haversine(coordinates['lon'], coordinates['lat'], data['coordinates']['lon'], data['coordinates']['lat'])
+
+            # If distance between both points is over 10km, we split
+            if d > 10:
+                matching_alias = None
+        else:
+
+            # Better safe than sorry. If we don't have coordinates, we have separate components
+            matching_alias = None
+
+    # Handling merge normally
     if matching_alias is None:
+
+        # TODO: due to file discrepancy (I don't have the correct file yet)
+        # it's possible we don't have the coordinates...
+        coordinates = COORDINATES_INDEX.get(location['_id'])
+
+        if not coordinates and wikidata and 'coordinates' in wikidata:
+            coordinates = wikidata['coordinates']
+
         data = {
             'aliases': set(aliases),
             'langs': set([location['lang']]),
-            'instance': set(),
-            'coordinates': COORDINATES_INDEX[location['_id']]
+            'instance': set()
         }
+
+        if coordinates:
+            data['coordinates'] = coordinates
 
         if wikidata and 'instance' in wikidata:
             data['instance'].update(collect_entities(ENTITIES_INDEX, wikidata['instance']))
 
+        component = len(LOCATIONS_INDEX)
         LOCATIONS_INDEX.append(data)
     else:
+        component = ALIASES_INDEX.node[matching_alias]['component']
+
         data = LOCATIONS_INDEX[component]
         data['aliases'].update(aliases)
         data['langs'].add(location['lang'])
