@@ -159,7 +159,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         aliases = set(aliases + flatten_aliases(wikidata['aliases']))
         aliases = list(aliases)
 
-    matching_alias = next((alias for alias in aliases if alias in ALIASES_INDEX), None)
+    matching_alias = next((alias.lower() for alias in aliases if alias.lower() in ALIASES_INDEX), None)
     component = ALIASES_INDEX.node[matching_alias]['component'] if matching_alias else len(LOCATIONS_INDEX)
 
     # Ensuring coordinates consistency
@@ -177,6 +177,8 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
             # If distance between both points is over 10km, we split
             if d > 10:
                 matching_alias = None
+
+                # TODO: Here we need to edit the aliases set of one of the two:
         else:
 
             # Better safe than sorry. If we don't have coordinates, we have separate components
@@ -215,6 +217,8 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
         if wikidata and 'instance' in wikidata:
             data['instance'].update(collect_entities(ENTITIES_INDEX, wikidata['instance']))
+
+    aliases = [alias.lower() for alias in aliases]
 
     for alias in aliases:
         ALIASES_INDEX.add_node(alias, component=component)
@@ -269,7 +273,8 @@ with open(BASE3_MINED_PATH, 'w') as mf, open(BASE1_PATH, 'r') as pf:
         if not people_doc:
             raise Exception('Could not find %s' % _id)
 
-        if 'links' not in people_doc:
+        # If we do not have links
+        if 'links' not in people_doc or len(people_doc['links']) == 0:
             continue
 
         writer.writerow({
