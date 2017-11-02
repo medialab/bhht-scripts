@@ -70,6 +70,7 @@ if len(sys.argv) < 2:
     raise Exception('$1: [output-folder]')
 
 output = sys.argv[1]
+only_location = len(sys.argv) > 2
 
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
@@ -78,12 +79,14 @@ people_collection = db.people
 entities_collection = db.entities
 
 BASE1_PATH = DATA['people']
+BASE2_PATH = DATA['location']
 BASE2_MINED_PATH = os.path.join(output, 'base2_locations_mined.csv')
 BASE3_MINED_PATH = os.path.join(output, 'base3_trajectoires_mined.csv')
 
 ALIASES_INDEX = nx.Graph()
 LOCATIONS_INDEX = []
 ENTITIES_INDEX = {}
+COORDINATES_INDEX = {}
 
 LOCATION_QUERY = {'done': True}
 ENTITIES_QUERY = {'done': True, 'labels': {'$exists': True}}
@@ -103,6 +106,18 @@ for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
 
     if label:
         ENTITIES_INDEX[entity['_id']] = label
+
+coordinates_bar = ProgressBar()
+
+print('Indexing coordinates...')
+with open(BASE2_PATH) as f:
+    reader = csv.DictReader(f)
+
+    for line in coordinates_bar(reader):
+        COORDINATES_INDEX[hasher(line['lang'], line['location'])] = {
+            'lat': float(line['lat_href']),
+            'lon': float(line['lon_href'])
+        }
 
 location_bar = ProgressBar(max_value=location_collection.count(LOCATION_QUERY))
 
@@ -137,11 +152,9 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         data = {
             'aliases': set(aliases),
             'langs': set([location['lang']]),
-            'instance': set()
+            'instance': set(),
+            'coordinates': COORDINATES_INDEX[location['_id']]
         }
-
-        if wikidata and 'coordinates' in wikidata:
-            data['coordinates'] = wikidata['coordinates']
 
         if wikidata and 'instance' in wikidata:
             data['instance'].update(collect_entities(ENTITIES_INDEX, wikidata['instance']))
@@ -151,9 +164,6 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         data = LOCATIONS_INDEX[component]
         data['aliases'].update(aliases)
         data['langs'].add(location['lang'])
-
-        if 'coordinates' not in data and wikidata and 'coordinates' in wikidata:
-            data['coordinates'] = wikidata['coordinates']
 
         if wikidata and 'instance' in wikidata:
             data['instance'].update(collect_entities(ENTITIES_INDEX, wikidata['instance']))
@@ -185,6 +195,9 @@ with open(BASE2_MINED_PATH, 'w') as f:
             'lon': coordinates['lon'] if coordinates else '',
             'instance': '§'.join(list(instance))
         })
+
+if only_location:
+    sys.exit(0)
 
 print('Writing path file')
 with open(BASE3_MINED_PATH, 'w') as mf, open(BASE1_PATH, 'r') as pf:
