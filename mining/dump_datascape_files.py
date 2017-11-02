@@ -160,7 +160,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         aliases = list(aliases)
 
     matching_alias = next((alias for alias in aliases if alias in ALIASES_INDEX), None)
-    component = ALIASES_INDEX.node[matching_alias] if matching_alias else len(LOCATIONS_INDEX)
+    component = ALIASES_INDEX.node[matching_alias]['component'] if matching_alias else len(LOCATIONS_INDEX)
 
     # Ensuring coordinates consistency
     if matching_alias:
