@@ -126,7 +126,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
     aliases = [location['name']]
 
     if wikidata and 'aliases' in wikidata:
-        aliases = set([location['name']] + flatten_aliases(wikidata['aliases']))
+        aliases = set(aliases + flatten_aliases(wikidata['aliases']))
         aliases = list(aliases)
 
     matching_alias = next((alias for alias in aliases if alias in ALIASES_INDEX), None)
@@ -211,7 +211,7 @@ with open(BASE3_MINED_PATH, 'w') as mf, open(BASE1_PATH, 'r') as pf:
 
         _id = hasher(main_lang, name)
 
-        people_doc = people_collection.find_one({'_id': _id})
+        people_doc = people_collection.find_one({'_id': _id}, {'html': 0})
 
         if not people_doc:
             raise Exception('Could not find %s' % _id)
