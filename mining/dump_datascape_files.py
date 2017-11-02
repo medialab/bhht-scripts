@@ -198,7 +198,8 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
                     existing_aliases -= set(aliases)
 
                     for alias in aliases:
-                        ALIASES_INDEX.remove_node(alias)
+                        if alias in ALIASES_INDEX:
+                            ALIASES_INDEX.remove_node(alias)
 
                 else:
 
