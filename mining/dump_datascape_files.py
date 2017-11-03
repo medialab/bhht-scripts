@@ -66,9 +66,16 @@ def collect_entities(index, entities):
     return [index[entity] for entity in entities if entity in index]
 
 def score_aliases_set(index, aliases):
-    scores = [index[alias] for alias in aliases]
+    # scores = [index[alias] for alias in aliases]
 
-    return mean(scores)
+    # return mean(scores)
+
+    score = 0
+
+    for alias in aliases:
+        score += index[alias]
+
+    return score
 
 def encode_links(year, links):
     return '§'.join([link + '|' + year for link in links])
