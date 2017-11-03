@@ -4,6 +4,7 @@
 # ==============================
 #
 # Script dumping the sets of existing location per lang from the MongoDB.
+# Regex to find empty components: /(?:^|§)(?:en|fr|it|es|de|sv|pt),,/
 #
 import os
 import sys
