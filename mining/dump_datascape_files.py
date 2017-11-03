@@ -208,6 +208,9 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
                     # Existing wins, we cull the new aliases
                     aliases = list(set(aliases) - existing_aliases)
 
+                if len(aliases) == 0:
+                    continue
+
                 matching_alias = None
         else:
 
@@ -232,6 +235,9 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
                 # Existing wins, we cull the new aliases
                 aliases = list(set(aliases) - existing_aliases)
+
+            if len(aliases) == 0:
+                continue
 
             matching_alias = None
 
@@ -290,10 +296,14 @@ with open(BASE2_MINED_PATH, 'w') as f:
     for component in LOCATIONS_INDEX:
         coordinates = component.get('coordinates')
         instance = component.get('instance')
+        aliases = component['aliases']
+
+        if len(aliases) == 0:
+            continue
 
         writer.writerow({
             'langs': '§'.join(list(component['langs'])),
-            'aliases': '§'.join(list(component['aliases'])),
+            'aliases': '§'.join(list(aliases)),
             'lat': coordinates['lat'] if coordinates else '',
             'lon': coordinates['lon'] if coordinates else '',
             'instance': '§'.join(list(instance))
