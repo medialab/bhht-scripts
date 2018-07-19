@@ -13,7 +13,7 @@ def create_url(lang, name):
 
 
 with open(INPUT, 'r') as input_file, \
-     open(OUTPUT, 'w') as outputfile:
+     open(OUTPUT, 'a') as outputfile:
      reader = csv.DictReader(input_file)
      writer = csv.DictWriter(outputfile, fieldnames=['name', 'lang', 'birth_date'])
      writer.writeheader()
