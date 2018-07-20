@@ -14,5 +14,7 @@
 3. Normalizing accents and unicode letters (ß).
 4. Fingerprinting.
 5. Squeezed fingerprinting.
+6. Dropping small tokens.
+7. Rusalka (phonetic).
 
 Doublons internes à une langue.
