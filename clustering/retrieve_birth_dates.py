@@ -6,6 +6,8 @@ INPUT = sys.argv[1]
 OUTPUT = 'birthdates.csv'
 
 BASE_URL = 'https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&props=claims'
+# START_AFTER = ('de', 'Nikolai_Gergow')
+START_AFTER = None
 
 
 def create_url(lang, name):
@@ -14,11 +16,16 @@ def create_url(lang, name):
 
 with open(INPUT, 'r') as input_file, \
      open(OUTPUT, 'a') as outputfile:
-     reader = csv.DictReader(input_file)
-     writer = csv.DictWriter(outputfile, fieldnames=['name', 'lang', 'birth_date'])
-     writer.writeheader()
+    reader = csv.DictReader(input_file)
+    writer = csv.DictWriter(outputfile, fieldnames=['name', 'lang', 'birth_date'])
+    writer.writeheader()
 
-     for line in reader:
+    if START_AFTER is not None:
+        for line in reader:
+            if (line['lang'], line['name']) == START_AFTER:
+                break
+
+    for line in reader:
         url = create_url(line['lang'], line['name'])
         print(url)
 
