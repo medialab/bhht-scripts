@@ -16,5 +16,7 @@
 5. Squeezed fingerprinting.
 6. Dropping small tokens.
 7. Rusalka (phonetic).
+8. Cologne -> too much noise.
+9. SNM Omission Key Lev1
 
 Doublons internes à une langue.
