@@ -18,5 +18,7 @@
 7. Rusalka (phonetic).
 8. Cologne -> too much noise.
 9. SNM Omission Key Lev1
+10. SNM Omission Key Lev2
+11. Cologne Less Noise
 
 Doublons internes à une langue.
