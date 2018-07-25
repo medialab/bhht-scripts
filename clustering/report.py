@@ -106,6 +106,9 @@ for i in range(2, 4):
 #     print(intersections)
 
 
+# NOTE: if no intersection, we must find the number of items that will be
+# dropped per langs & number of lines that will be dropped
+
 print()
 
 TITLE = '3) Clustering sets:'
