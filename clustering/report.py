@@ -4,12 +4,13 @@ import networkx as nx
 from collections import defaultdict, Counter, OrderedDict
 from tqdm import tqdm
 
-DATA = './clustering.csv'
-CLUSTERING_RESULT = './clustering_results.csv'
+DATA = './base1_individus.csv'
+CLUSTERING_RESULT = './fixed_clustering_results.csv'
 
 PERSONS = {}
 CLUSTERS_IDS = defaultdict(list)
 RESULTS_COUNTER = Counter()
+IDS_COUNTER = Counter()
 SETS_COUNTER = Counter()
 GRAPH = nx.Graph()
 
@@ -33,7 +34,8 @@ with open(DATA, 'r') as f:
     reader = csv.DictReader(f)
 
     for line in tqdm(reader, 'Reading CSV data', total=1846130):
-        PERSONS[line['id']] = line
+        PERSONS['%s:%s' % (line['id'], line['language'])] = line
+        IDS_COUNTER[line['id']] += 1
 
 with open(CLUSTERING_RESULT, 'r') as f:
     reader = csv.DictReader(f)
@@ -55,13 +57,30 @@ with open(CLUSTERING_RESULT, 'r') as f:
             GRAPH.add_node(b, set=line['set'])
             GRAPH.add_edge(a, b)
 
+TRUE_CLUSTERS = list(nx.connected_components(GRAPH))
+
 TITLE = '1) Sanity tests:'
 print(TITLE)
 print('-' * len(TITLE))
 if any(True for results in CLUSTERS_IDS.values() if len(results) > 1):
     print('- [WARNING]: Found duplicate duplicates.')
+    print()
+
+    for ids, results in CLUSTERS_IDS.items():
+        if len(results) > 1:
+            print(ids)
+            print(len(results))
 else:
     print('✓ No duplicate duplicates.')
+
+# for cluster in TRUE_CLUSTERS:
+#     if any(True for unique_id in cluster if IDS_COUNTER[unique_id.split(':', 1)[0]] > 1):
+#         print('[WARNING]: Found ambiguous cluster:')
+
+#         for unique_id in cluster:
+#             print('  -', PERSONS[unique_id]['name'], unique_id)
+
+#         print()
 
 print()
 
@@ -75,7 +94,6 @@ print('  - Total: %i' % len(list(RESULTS_COUNTER.elements())))
 for result, count in RESULTS_COUNTER.most_common():
     print('  - %s: %i' % (result, count))
 
-TRUE_CLUSTERS = list(nx.connected_components(GRAPH))
 CLUSTERS_SIZE_DISTRIBUTION = Counter()
 
 for cluster in TRUE_CLUSTERS:
@@ -153,7 +171,7 @@ for i, (slug, label) in enumerate(SETS.items()):
                 name = p['%s_link' % label]
                 if name:
                     link = 'https://%s.wikipedia.org/wiki/%s' % (lang, name)
-                    print('  - (%s) %s %s | %s' % (lang, unique_id.ljust(8, ' '), name, link))
+                    print('  - (%s) %s %s | %s' % (lang, unique_id.ljust(20, ' '), name, link))
 
         print()
 
