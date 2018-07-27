@@ -12,6 +12,7 @@ CLUSTERS_IDS = defaultdict(list)
 RESULTS_COUNTER = Counter()
 IDS_COUNTER = Counter()
 SETS_COUNTER = Counter()
+FALSE_POSITIVES = Counter()
 GRAPH = nx.Graph()
 
 LANGS = {
@@ -47,6 +48,9 @@ with open(CLUSTERING_RESULT, 'r') as f:
         CLUSTERS_IDS[key].append(line['set'])
         RESULTS_COUNTER[result] += 1
 
+        if result == 'non':
+            FALSE_POSITIVES[line['set']] += 1
+
         if result != 'oui':
             continue
 
@@ -58,6 +62,12 @@ with open(CLUSTERING_RESULT, 'r') as f:
             GRAPH.add_edge(a, b)
 
 TRUE_CLUSTERS = list(nx.connected_components(GRAPH))
+
+# Overriding with actual data
+FALSE_POSITIVES['cologne'] = 485 # 11655
+FALSE_POSITIVES['snm_skeleton_lev1'] = 468
+# lev2 7265 -> 3 vrais positifs -> 369 sample
+# 33739511|6939994,5877465|48798052,25274649|3057649
 
 TITLE = '1) Sanity tests:'
 print(TITLE)
@@ -135,10 +145,10 @@ print('-' * len(TITLE))
 print()
 
 SETS = OrderedDict({
-    'low_confidence_cc': 'Low Confidence Connected Components',
     'high_confidence_cc': 'High Confidence Connected Components',
+    'low_confidence_cc': 'Low Confidence Connected Components',
     'normalization': 'Aggressive Normalization',
-    'unicode': 'Unidode standardization',
+    'unicode': 'Unicode standardization',
     'fingerprint': 'String Fingerprint',
     'squeezed_fingerprint': 'Squeezed String Fingerprint' ,
     'small_tokens': 'Small Tokens Dropping',
@@ -151,7 +161,12 @@ SETS = OrderedDict({
 print('Summary')
 
 for i, (slug, label) in enumerate(SETS.items()):
-    print('  %i. %s (%s) => %i' % (i + 1, label, slug, SETS_COUNTER[slug]))
+    false_positives = FALSE_POSITIVES[slug]
+    true_positives = SETS_COUNTER[slug]
+    N = false_positives + true_positives
+    precision = true_positives / N
+
+    print('  %i. %s (%s) => %i/%i (precision: %f)' % (i + 1, label, slug, true_positives, N, precision))
 
 print()
 
