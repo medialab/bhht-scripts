@@ -2,7 +2,7 @@ import csv
 from tqdm import tqdm
 
 INPUT = './base1_individus.csv'
-CLUSTERING = './clustering_results.csv'
+CLUSTERING = './fixed_clustering_results.csv'
 OUTPUT = 'tagged.csv'
 
 DUPLICATES = set()
@@ -26,6 +26,6 @@ with open(INPUT, 'r') as f, \
      writer.writeheader()
 
      for line in tqdm(reader):
-        line['duplicate'] = '1' if line['id'] in DUPLICATES else '0'
+        line['duplicate'] = '1' if ('%s:%s' % (line['id'], line['language'])) in DUPLICATES else '0'
 
         writer.writerow(line)
