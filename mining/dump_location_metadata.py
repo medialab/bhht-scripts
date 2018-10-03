@@ -85,7 +85,12 @@ entities_bar = ProgressBar(max_value=entities_collection.count(ENTITIES_QUERY))
 
 print('Indexing entities...')
 with open(ENTITIES_PATH, 'w') as f:
-    ew = csv.DictWriter(f, fieldnames=['id', 'label'])
+    fn = ['id', 'label']
+
+    for lang in LANGS:
+        fn.append(lang)
+
+    ew = csv.DictWriter(f, fieldnames=fn)
     ew.writeheader()
 
     for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
@@ -99,7 +104,14 @@ with open(ENTITIES_PATH, 'w') as f:
 
         if label:
             ENTITIES_INDEX[entity['_id']] = label
-            ew.writerow({'id': entity['_id'], 'label': label})
+
+            row = {'id': entity['_id'], 'label': label}
+
+            for lang in LANGS:
+                if lang in entity['labels']:
+                    row[lang] = entity['labels'][lang]
+
+            ew.writerow(row)
 
 location_bar = ProgressBar(max_value=location_collection.count(LOCATION_QUERY))
 output_file = open(OUTPUT_PATH, 'w')
