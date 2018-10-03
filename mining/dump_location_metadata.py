@@ -144,7 +144,7 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
 
         row['id'] = wikidata.get('id', '')
 
-        position = wikidata.get('location')
+        position = wikidata.get('coordinates')
 
         if position:
             row['lat'] = position.get('lat', '')
