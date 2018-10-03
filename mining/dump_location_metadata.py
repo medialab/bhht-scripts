@@ -69,9 +69,9 @@ def add_clique(g, clique, labels):
             g.add_node(B, label=B_label)
 
             if g.has_edge(i, j):
-                g[i][j]['weight'] += 1
+                g[A][B]['weight'] += 1
             else:
-                g.add_edge(i, j, weight=1)
+                g.add_edge(A, B, weight=1)
 
 def collect_entities(index, entities):
     return [index.get(entity, entity) for entity in entities]
