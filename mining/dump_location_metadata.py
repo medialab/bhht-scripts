@@ -6,6 +6,7 @@
 # Script dumping the location metadata.
 #
 import csv
+import networkx as nx
 from progressbar import ProgressBar
 from config import DATA, MONGODB
 from pymongo import MongoClient
@@ -44,14 +45,36 @@ for lang in LANGS:
 
 OUTPUT_PATH = './locations.csv'
 ENTITIES_PATH = './entities.csv'
+CATEGORY_GRAPH_PATH = './category-graph.gexf'
+INSTANCE_GRAPH_PATH = './instance-graph.gexf'
 
 LOCATION_QUERY = {'done': True}
 ENTITIES_QUERY = {'done': True, 'labels': {'$exists': True}}
 
 ENTITIES_INDEX = {}
+INSTANCE_GRAPH = nx.Graph()
+CATEGORY_GRAPH = nx.Graph()
+
+def add_clique(g, clique, labels):
+    for i in range(len(clique)):
+        A = clique[i]
+        A_label = labels[i]
+
+        g.add_node(A, label=A_label)
+
+        for j in range(i + 1, len(clique)):
+            B = clique[j]
+            B_label = labels[j]
+
+            g.add_node(B, label=B_label)
+
+            if g.has_edge(i, j):
+                g[i][j]['weight'] += 1
+            else:
+                g.add_edge(i, j, weight=1)
 
 def collect_entities(index, entities):
-    return [index[entity] for entity in entities if entity in index]
+    return [index.get(entity, entity) for entity in entities]
 
 mongo_client = MongoClient(MONGODB['host'], MONGODB['port'])
 db = mongo_client.bhht
@@ -61,17 +84,22 @@ entities_collection = db.entities
 entities_bar = ProgressBar(max_value=entities_collection.count(ENTITIES_QUERY))
 
 print('Indexing entities...')
-for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
-    label = None
+with open(ENTITIES_PATH, 'w') as f:
+    ew = csv.DictWriter(f, fieldnames=['id', 'label'])
+    ew.writeheader()
 
-    # We try to find a suitable label in lang order
-    for lang in LANGS:
-        if lang in entity['labels']:
-            label = entity['labels'][lang]
-            break
+    for entity in entities_bar(entities_collection.find(ENTITIES_QUERY)):
+        label = None
 
-    if label:
-        ENTITIES_INDEX[entity['_id']] = label
+        # We try to find a suitable label in lang order
+        for lang in LANGS:
+            if lang in entity['labels']:
+                label = entity['labels'][lang]
+                break
+
+        if label:
+            ENTITIES_INDEX[entity['_id']] = label
+            ew.writerow({'id': entity['_id'], 'label': label})
 
 location_bar = ProgressBar(max_value=location_collection.count(LOCATION_QUERY))
 output_file = open(OUTPUT_PATH, 'w')
@@ -124,21 +152,32 @@ for location in location_bar(location_collection.find(LOCATION_QUERY, {'html': 0
         country = wikidata.get('country')
 
         if country:
-            row['country'] = '|'.join(collect_entities(ENTITIES_INDEX, country))
+            country_labels = collect_entities(ENTITIES_INDEX, country)
+            row['country'] = '|'.join(country_labels)
             row['country_entities'] = '|'.join(country)
 
         category = wikidata.get('category')
 
         if category:
-            row['category'] = '|'.join(collect_entities(ENTITIES_INDEX, category))
+            category_labels = collect_entities(ENTITIES_INDEX, category)
+            row['category'] = '|'.join(category_labels)
             row['category_entities'] = '|'.join(category)
+
+            add_clique(CATEGORY_GRAPH, category, category_labels)
 
         instance = wikidata.get('instance')
 
         if instance:
-            row['instance'] = '|'.join(collect_entities(ENTITIES_INDEX, instance))
+            instance_labels = collect_entities(ENTITIES_INDEX, instance)
+            row['instance'] = '|'.join(instance_labels)
             row['instance_entities'] = '|'.join(instance)
+
+            add_clique(INSTANCE_GRAPH, instance, instance_labels)
 
     writer.writerow(row)
 
 output_file.close()
+
+print('Dumping graphs...')
+nx.write_gexf(CATEGORY_GRAPH, CATEGORY_GRAPH_PATH)
+nx.write_gexf(INSTANCE_GRAPH, INSTANCE_GRAPH_PATH)
