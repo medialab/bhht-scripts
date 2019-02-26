@@ -110,7 +110,7 @@ async def process_page(session, semaphore, output, row):
         # Writing result as CSV
         csv_line = write_csv_line([
             row['lang'],
-            row['id'],
+            row.get('id', ''),
             row['name']
         ] + months)
 
