@@ -8,14 +8,19 @@ from fog.clustering import passjoin, key_collision
 from fog.phonetics import cologne, rusalka
 from fog.utils import squeeze
 from fog.key import fingerprint
+from statistics import mean, median
 
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
 FIELDNAMES_TO_ADD = [
     'transliteration',
+    'clustering_0_exact',
+    'clustering_0_exact_confidence',
     'clustering_1_normalization',
-    'clustering_1_normalization_confidence'
+    'clustering_1_normalization_confidence',
+    'clustering_2_harsher_normalization',
+    'clustering_2_harsher_normalization_confidence'
 ]
 
 def process(name):
@@ -28,62 +33,36 @@ CONFIDENCE_TOTAL = 4.0
 def confidence_score(cluster):
     score = 0
 
-    # 1. Gender
-    genders = set(r['gender_B'] for r in cluster if r['gender_B'])
-
-    # If different genders are recorded we dismiss the cluster
-    if len(genders) > 1:
-        return 0
-
-    score += len([r for r in cluster if r['gender_B']]) / len(cluster)
-
-    # 2. Birth date
-    births = set(r['birth_B'] for r in cluster if r['birth_B'])
-
-    if len(births) > 1:
-        return 0
-
-    score += len([r for r in cluster if r['birth_B']]) / len(cluster)
-
-    # 3. Death date
-    deaths = set(r['death_B'] for r in cluster if r['death_B'])
-
-    if len(deaths) > 1:
-        return 0
-
-    score += len([r for r in cluster if r['death_B']]) / len(cluster)
-
-    # 4. Occupation
-    score += 0.5 * (1 if len(set(r['final_occupation_L2_B'] for r in cluster)) == 1 else 0)
-
-    # 5. Citizenship
-    score += 0.5 * (1 if len(set(r['final_citizenship'] for r in cluster)) == 1 else 0)
-
-    return score / CONFIDENCE_TOTAL
-
-
-def sensible(cluster):
-    genders = set(r['gender_B'] for r in cluster if r['gender_B'])
-
-    if len(genders) > 1:
-        return False
+    genders = set(r['gender_B'] for r in cluster)
+    genders_without_missing = set(r['gender_B'] for r in cluster if r['gender_B'] and r['gender_B'] != 'Other')
 
     births = set(r['birth_B'] for r in cluster)
-
-    if len(births) == 1 and '' not in births:
-        return True
+    births_without_missing = set(r['birth_B'] for r in cluster if r['birth_B'])
 
     deaths = set(r['death_B'] for r in cluster)
+    deaths_without_missing = set(r['death_B'] for r in cluster if r['death_B'])
 
-    if len(deaths) == 1 and '' not in deaths:
-        return True
+    occupations = set(r['final_occupation_L2_B'] for r in cluster)
+    occupations_without_missing = set(r['final_occupation_L2_B'] for r in cluster if r['final_occupation_L2_B'])
 
-    # occupations = set(r['final_occupation_L2_B'] for r in cluster)
+    citizenships = set(r['final_citizenship'] for r in cluster)
+    citizenships_without_missing = set(r['final_citizenship'] for r in cluster if r['final_citizenship'])
 
-    # if len(occupations) == 1 and '' not in occupations:
-    #     return True
+    if (
+        len(genders_without_missing) > 1 or
+        len(births_without_missing) > 1 or
+        len(deaths_without_missing) > 1
+    ):
+        return 0
 
-    return False
+    score += 1 - len([r['gender_B'] for r in cluster if not r['gender_B'] or r['gender_B'] == 'Other']) / len(cluster)
+    score += 1 - len([r['birth_B'] for r in cluster if not r['birth_B'] or r['birth_B'] == 'Other']) / len(cluster)
+    score += 1 - len([r['death_B'] for r in cluster if not r['death_B'] or r['death_B'] == 'Other']) / len(cluster)
+
+    score += 0.5 - len([r['final_occupation_L2_B'] for r in cluster if not r['final_occupation_L2_B'] or r['final_occupation_L2_B'] == 'Other']) / len(cluster) / 2.0
+    score += 0.5 - len([r['final_citizenship'] for r in cluster if not r['final_citizenship'] or r['final_citizenship'] == 'Other']) / len(cluster) / 2.0
+
+    return score / CONFIDENCE_TOTAL
 
 DATA = []
 
@@ -96,19 +75,37 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
         line['transliteration'] = unidecode(line['name'])
         DATA.append(line)
 
+def apply_clustering(method, data):
+    name = method.__name__
+
+    I = 0
+    C = []
+    for c, cluster in enumerate(method(range(len(DATA)))):
+        items = [DATA[i] for i in cluster]
+        I += len(items)
+
+        confidence = confidence_score(items)
+        C.append(confidence)
+
+        for item in items:
+            item[name] = c
+            item[name + '_confidence'] = confidence
+
+    print('`%s` found %i clusters regrouping %i rows (confidence avg: %2f, median: %2f)' % (name, (c + 1), I, mean(C), median(C)))
+
+# 0. Exact
+def clustering_0_exact(data):
+    return key_collision(data, key=lambda i: DATA[i]['transliteration'])
+
 # 1. Basic normalization
 basic_normalization = lambda i: process(DATA[i]['transliteration'])
 
-for c, cluster in enumerate(key_collision(range(len(DATA)), key=basic_normalization)):
-    items = [DATA[i] for i in cluster]
+def clustering_1_normalization(data):
+    return key_collision(data, key=basic_normalization)
 
-    confidence = confidence_score(items)
-
-    for item in items:
-        item['clustering_1_normalization'] = c
-        item['clustering_1_normalization_confidence'] = confidence
-
-print('Found %i clusters for `clustering_1_normalization`' % (c + 1))
+# Applying clusterings
+apply_clustering(clustering_0_exact, DATA)
+apply_clustering(clustering_1_normalization, DATA)
 
 with open(OUTPUT, 'w') as of:
     writer = csv.DictWriter(of, fieldnames=fieldnames + FIELDNAMES_TO_ADD)
