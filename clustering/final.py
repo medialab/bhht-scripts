@@ -62,7 +62,7 @@ def confidence_score(cluster):
     score += 1 - len([r['birth_B'] for r in cluster if not r['birth_B'] or r['birth_B'] == 'Other']) / len(cluster)
     score += 1 - len([r['death_B'] for r in cluster if not r['death_B'] or r['death_B'] == 'Other']) / len(cluster)
 
-    if len(occupations_without_missing) > 2:
+    if len(occupations_without_missing) < 2:
         score += 0.5 - len([r['final_occupation_L2_B'] for r in cluster if not r['final_occupation_L2_B'] or r['final_occupation_L2_B'] == 'Other']) / len(cluster) / 2.0
 
     if len(citizenships_without_missing) < 2:
