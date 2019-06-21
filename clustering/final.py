@@ -14,7 +14,7 @@ from Levenshtein import distance as levenshtein
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = False
+TEST_RUN = True
 
 FIELDNAMES_TO_ADD = [
     'transliteration'
@@ -33,7 +33,7 @@ def safe_cologne(name):
         return None
 
 CONFIDENCE_TOTAL = 4.0
-def confidence_score(cluster):
+def confidence_score(cluster, boosted=False):
     score = 0
 
     genders = set(r['gender_B'] for r in cluster)
@@ -62,6 +62,9 @@ def confidence_score(cluster):
     score += 1 - len([r['birth_B'] for r in cluster if not r['birth_B'] or r['birth_B'] == 'Other']) / len(cluster)
     score += 1 - len([r['death_B'] for r in cluster if not r['death_B'] or r['death_B'] == 'Other']) / len(cluster)
 
+    if boosted and score == 0:
+        score = 0.5
+
     if len(occupations_without_missing) < 2:
         score += 0.5 - len([r['final_occupation_L2_B'] for r in cluster if not r['final_occupation_L2_B'] or r['final_occupation_L2_B'] == 'Other']) / len(cluster) / 2.0
 
@@ -84,6 +87,8 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
         line['transliteration'] = unidecode(line['name'])
         DATA.append(line)
 
+VALID_CLUSTERS = set()
+
 def apply_clustering(method, data):
     name = method.__name__
 
@@ -93,6 +98,7 @@ def apply_clustering(method, data):
     I = 0
     n = 0
     C = []
+    V = 0
     for c, cluster in enumerate(method(range(len(DATA)))):
         items = [DATA[i] for i in cluster]
         I += len(items)
@@ -100,6 +106,13 @@ def apply_clustering(method, data):
 
         confidence = confidence_score(items)
         C.append(confidence)
+
+        if confidence >= .75:
+            key = tuple(sorted(cluster))
+
+            if key not in VALID_CLUSTERS:
+                VALID_CLUSTERS.add(key)
+                V += 1
 
         for item in items:
             item[name] = c
@@ -109,10 +122,17 @@ def apply_clustering(method, data):
     non_zero_mean = mean(non_zero_C)
     non_zero_median = median(non_zero_C)
 
-    print(
-        '`%s` found %i *%i clusters regrouping %i rows (confidence avg: %2f *%2f, median: %2f *%2f)' %
-        (name, n, len(non_zero_C), I, mean(C), non_zero_mean, median(C), non_zero_median)
-    )
+    valid_C = [c for c in C if c >= .75]
+
+    print('[%s]' % name)
+    print('  clusters: %i' % n)
+    print('  non-zero clusters: %i' % len(non_zero_C))
+    print('  >0.75 clusters: %i' % len(valid_C))
+    print('  >0.75 original clusters: %i' % V)
+    print('  rows: %i' % I)
+    print('  confidence avg: %2f *%2f' % (mean(C), non_zero_mean))
+    print('  confidence median: %2f *%2f' % (median(C), non_zero_median))
+    print()
 
 # 0. Exact
 def clustering_0_exact(data):
@@ -160,6 +180,13 @@ apply_clustering(clustering_4_bigram_fingerprinting, DATA)
 apply_clustering(clustering_5_cologne, DATA)
 apply_clustering(clustering_6_rusalka, DATA)
 apply_clustering(clustering_7_snm, DATA)
+
+ROWS_TO_MERGE = set()
+
+for cluster in VALID_CLUSTERS:
+    ROWS_TO_MERGE.update(cluster)
+
+print('Found a total of %i valid clusters gathering %i rows' % (len(VALID_CLUSTERS), len(ROWS_TO_MERGE)))
 
 with open(OUTPUT, 'w') as of:
     writer = csv.DictWriter(of, fieldnames=fieldnames + FIELDNAMES_TO_ADD)
