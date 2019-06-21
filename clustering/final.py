@@ -15,9 +15,11 @@ INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
 TEST_RUN = True
+TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
-    'transliteration'
+    'transliteration',
+    'valid_cluster'
 ]
 
 def process(name):
@@ -56,7 +58,7 @@ def confidence_score(cluster, boosted=False):
         len(births_without_missing) > 1 or
         len(deaths_without_missing) > 1
     ):
-        return 0
+        return -1
 
     score += 1 - len([r['gender_B'] for r in cluster if not r['gender_B'] or r['gender_B'] == 'Other']) / len(cluster)
     score += 1 - len([r['birth_B'] for r in cluster if not r['birth_B'] or r['birth_B'] == 'Other']) / len(cluster)
@@ -81,16 +83,18 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
     buckets = defaultdict(list)
 
     if TEST_RUN:
-        reader = itertools.islice(reader, 0, 10_000)
+        reader = itertools.islice(reader, 0, TEST_RUN_BATCH)
 
     for line in tqdm(reader):
         line['transliteration'] = unidecode(line['name'])
         DATA.append(line)
 
-VALID_CLUSTERS = set()
+VALID_CLUSTERS = {}
 
-def apply_clustering(method, data):
+def apply_clustering(method, data, aggresive=False):
     name = method.__name__
+
+    threshold = 0.75 if not aggresive else 0.8
 
     FIELDNAMES_TO_ADD.append(name)
     FIELDNAMES_TO_ADD.append(name + '_confidence')
@@ -107,28 +111,30 @@ def apply_clustering(method, data):
         confidence = confidence_score(items)
         C.append(confidence)
 
-        if confidence >= .75:
+        if confidence >= threshold:
             key = tuple(sorted(cluster))
 
             if key not in VALID_CLUSTERS:
-                VALID_CLUSTERS.add(key)
+                VALID_CLUSTERS[key] = name
                 V += 1
 
         for item in items:
             item[name] = c
             item[name + '_confidence'] = confidence
 
-    non_zero_C = [c for c in C if c != 0]
+    non_zero_C = [c for c in C if c > 0]
     non_zero_mean = mean(non_zero_C)
     non_zero_median = median(non_zero_C)
 
-    valid_C = [c for c in C if c >= .75]
+    invalid_C = [c for c in C if c == -1]
+    valid_C = [c for c in C if c >= threshold]
 
-    print('[%s]' % name)
+    print('[%s] %s' % (name, 'aggresive' if aggresive else 'mild'))
     print('  clusters: %i' % n)
-    print('  non-zero clusters: %i' % len(non_zero_C))
-    print('  >0.75 clusters: %i' % len(valid_C))
-    print('  >0.75 original clusters: %i' % V)
+    print('  -1 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
+    print('  >0 clusters: %i' % len(non_zero_C))
+    print('  >%s clusters: %i' % (str(threshold), len(valid_C)))
+    print('  >%s original clusters: %i' % (str(threshold), V))
     print('  rows: %i' % I)
     print('  confidence avg: %2f *%2f' % (mean(C), non_zero_mean))
     print('  confidence median: %2f *%2f' % (median(C), non_zero_median))
@@ -176,15 +182,21 @@ apply_clustering(clustering_0_exact, DATA)
 apply_clustering(clustering_1_normalization, DATA)
 apply_clustering(clustering_2_harsh_normalization, DATA)
 apply_clustering(clustering_3_fingerprinting, DATA)
-apply_clustering(clustering_4_bigram_fingerprinting, DATA)
-apply_clustering(clustering_5_cologne, DATA)
-apply_clustering(clustering_6_rusalka, DATA)
-apply_clustering(clustering_7_snm, DATA)
+apply_clustering(clustering_4_bigram_fingerprinting, DATA, aggresive=True)
+apply_clustering(clustering_5_cologne, DATA, aggresive=True)
+apply_clustering(clustering_6_rusalka, DATA, aggresive=True)
+apply_clustering(clustering_7_snm, DATA, aggresive=True)
 
 ROWS_TO_MERGE = set()
 
-for cluster in VALID_CLUSTERS:
-    ROWS_TO_MERGE.update(cluster)
+for key, method in VALID_CLUSTERS.items():
+    ROWS_TO_MERGE.update(key)
+
+    for i in key:
+        DATA[i]['valid_cluster'] = method
+        print(DATA[i]['name'], DATA[i]['gender_B'], DATA[i]['birth_B'], DATA[i]['death_B'], DATA[i]['final_occupation_L2_B'], DATA[i]['final_citizenship'], DATA[i][method + '_confidence'], method)
+
+    print()
 
 print('Found a total of %i valid clusters gathering %i rows' % (len(VALID_CLUSTERS), len(ROWS_TO_MERGE)))
 
