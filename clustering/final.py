@@ -15,7 +15,7 @@ from Levenshtein import distance as levenshtein
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = False
+TEST_RUN = True
 TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
@@ -165,10 +165,10 @@ def apply_clustering(method, data, aggresive=False):
     print('[%s] %s' % (name, 'aggressive' if aggresive else 'mild'))
     print('  clusters: %i' % n)
     print('  -1 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
-    print('  >0 clusters: %i' % len(non_zero_C))
-    print('  >%s clusters: %i' % (str(threshold), len(valid_C)))
-    print('  >%s original clusters: %i' % (str(threshold), V))
-    print('  rows: %i' % I)
+    print('  >0 clusters: %i (%2f)' % (len(non_zero_C), len(non_zero_C) / n))
+    print('  >%s clusters: %i (%2f)' % (str(threshold), len(valid_C), len(valid_C) / n))
+    print('  >%s never seen before clusters: %i (%2f)' % (str(threshold), V, V / n))
+    print('  rows: %i *%i' % (I, len(non_zero_C)))
     print('  confidence avg: %2f *%2f' % (mean(C), non_zero_mean))
     print('  confidence median: %2f *%2f' % (median(C), non_zero_median))
     print()
