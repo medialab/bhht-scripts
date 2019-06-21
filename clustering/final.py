@@ -15,7 +15,7 @@ from Levenshtein import distance as levenshtein
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = True
+TEST_RUN = False
 TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
@@ -232,9 +232,9 @@ for key, method in VALID_CLUSTERS.items():
 
     for i in key:
         DATA[i]['valid_cluster'] = method
-        print(DATA[i]['name'], DATA[i]['gender_B'], DATA[i]['birth_B'], DATA[i]['death_B'], DATA[i]['final_occupation_L2_B'], DATA[i]['final_citizenship'], DATA[i][method + '_confidence'], method)
+        # print(DATA[i]['name'], DATA[i]['gender_B'], DATA[i]['birth_B'], DATA[i]['death_B'], DATA[i]['final_occupation_L2_B'], DATA[i]['final_citizenship'], DATA[i][method + '_confidence'], method)
 
-    print()
+    # print()
 
 print('Found a total of %i valid clusters gathering %i rows' % (len(VALID_CLUSTERS), len(ROWS_TO_MERGE)))
 
