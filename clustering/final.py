@@ -1,3 +1,4 @@
+import re
 import csv
 import codecs
 import itertools
@@ -22,6 +23,8 @@ FIELDNAMES_TO_ADD = [
     'valid_cluster'
 ]
 
+NUMBER_RE = re.compile(r'(?:^[.,XVI0-9\-]+$|[()])', re.I)
+
 def process(name):
     return name.lower().strip()
 
@@ -34,24 +37,44 @@ def safe_cologne(name):
     except:
         return None
 
+def initialize(name):
+    name = name.replace('-', '_').lower()
+    tokens = name.split('_')
+
+    if any(NUMBER_RE.match(t) for t in tokens):
+        return name
+
+    if len(tokens) < 2:
+        return name
+
+    try:
+        initials = '_'.join(s[0] + '.' for s in tokens[:-1])
+    except:
+        return name
+
+    return initials + tokens[-1]
+
+def missing(value):
+    return not value or value == 'Other' or value == '.' or value == 'missing'
+
 CONFIDENCE_TOTAL = 4.0
 def confidence_score(cluster, boosted=False):
     score = 0
 
     genders = set(r['gender_B'] for r in cluster)
-    genders_without_missing = set(r['gender_B'] for r in cluster if r['gender_B'] and r['gender_B'] != 'Other')
+    genders_without_missing = set(r['gender_B'] for r in cluster if not missing(r['gender_B']))
 
     births = set(r['birth_B'] for r in cluster)
-    births_without_missing = set(r['birth_B'] for r in cluster if r['birth_B'])
+    births_without_missing = set(r['birth_B'] for r in cluster if not missing(r['birth_B']))
 
     deaths = set(r['death_B'] for r in cluster)
-    deaths_without_missing = set(r['death_B'] for r in cluster if r['death_B'])
+    deaths_without_missing = set(r['death_B'] for r in cluster if not missing(r['death_B']))
 
     occupations = set(r['final_occupation_L2_B'] for r in cluster)
-    occupations_without_missing = set(r['final_occupation_L2_B'] for r in cluster if r['final_occupation_L2_B'])
+    occupations_without_missing = set(r['final_occupation_L2_B'] for r in cluster if not missing(r['final_occupation_L2_B']))
 
     citizenships = set(r['final_citizenship'] for r in cluster)
-    citizenships_without_missing = set(r['final_citizenship'] for r in cluster if r['final_citizenship'])
+    citizenships_without_missing = set(r['final_citizenship'] for r in cluster if not missing(r['final_citizenship']))
 
     if (
         len(genders_without_missing) > 1 or
@@ -60,20 +83,30 @@ def confidence_score(cluster, boosted=False):
     ):
         return -1
 
-    score += 1 - len([r['gender_B'] for r in cluster if not r['gender_B'] or r['gender_B'] == 'Other']) / len(cluster)
-    score += 1 - len([r['birth_B'] for r in cluster if not r['birth_B'] or r['birth_B'] == 'Other']) / len(cluster)
-    score += 1 - len([r['death_B'] for r in cluster if not r['death_B'] or r['death_B'] == 'Other']) / len(cluster)
+    score += 1 - len([r['gender_B'] for r in cluster if missing(r['gender_B'])]) / len(cluster)
+    score += 1 - len([r['birth_B'] for r in cluster if missing(r['birth_B'])]) / len(cluster)
+    score += 1 - len([r['death_B'] for r in cluster if missing(r['death_B'])]) / len(cluster)
 
     if boosted and score == 0:
         score = 0.5
 
     if len(occupations_without_missing) < 2:
-        score += 0.5 - len([r['final_occupation_L2_B'] for r in cluster if not r['final_occupation_L2_B'] or r['final_occupation_L2_B'] == 'Other']) / len(cluster) / 2.0
+        score += 0.5 - len([r['final_occupation_L2_B'] for r in cluster if missing(r['final_occupation_L2_B'])]) / len(cluster) / 2.0
 
     if len(citizenships_without_missing) < 2:
-        score += 0.5 - len([r['final_citizenship'] for r in cluster if not r['final_citizenship'] or r['final_citizenship'] == 'Other']) / len(cluster) / 2.0
+        score += 0.5 - len([r['final_citizenship'] for r in cluster if missing(r['final_citizenship'])]) / len(cluster) / 2.0
 
-    return score / CONFIDENCE_TOTAL
+    normalized = score / CONFIDENCE_TOTAL
+
+    if (
+        normalized == 0.75 and
+        not any(missing(r['birth_B']) for r in cluster) and
+        len(occupations) < 2 and
+        len(citizenships) < 2
+    ):
+        normalized += 0.05
+
+    return normalized
 
 DATA = []
 
@@ -129,7 +162,7 @@ def apply_clustering(method, data, aggresive=False):
     invalid_C = [c for c in C if c == -1]
     valid_C = [c for c in C if c >= threshold]
 
-    print('[%s] %s' % (name, 'aggresive' if aggresive else 'mild'))
+    print('[%s] %s' % (name, 'aggressive' if aggresive else 'mild'))
     print('  clusters: %i' % n)
     print('  -1 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
     print('  >0 clusters: %i' % len(non_zero_C))
@@ -152,24 +185,28 @@ def clustering_1_normalization(data):
 def clustering_2_harsh_normalization(data):
     return key_collision(data, key=lambda i: process_harsher(DATA[i]['transliteration']))
 
-# 3. Fingerprinting
-def clustering_3_fingerprinting(data):
+# 3. Initials normalization
+def clustering_3_initials(data):
+    return key_collision(data, key=lambda i: initialize(DATA[i]['transliteration']))
+
+# 4. Fingerprinting
+def clustering_4_fingerprinting(data):
     return key_collision(data, key=lambda i: fingerprint(DATA[i]['transliteration']))
 
-# 4. Bigram fingerprinting
-def clustering_4_bigram_fingerprinting(data):
+# 5. Bigram fingerprinting
+def clustering_5_bigram_fingerprinting(data):
     return key_collision(data, key=lambda i: ngrams_fingerprint(2, DATA[i]['transliteration']))
 
-# 5. Cologne
-def clustering_5_cologne(data):
+# 6. Cologne
+def clustering_6_cologne(data):
     return key_collision(data, key=lambda i: safe_cologne(DATA[i]['transliteration']))
 
-# 6. Rusalka
-def clustering_6_rusalka(data):
+# 7. Rusalka
+def clustering_7_rusalka(data):
     return key_collision(data, key=lambda i: rusalka(DATA[i]['transliteration']))
 
-# 7. SNM k=1
-def clustering_7_snm(data):
+# 8. SNM k=1
+def clustering_8_snm(data):
 
     distance = lambda i, j: levenshtein(DATA[i]['transliteration'], DATA[j]['transliteration'])
 
@@ -181,11 +218,12 @@ def clustering_7_snm(data):
 apply_clustering(clustering_0_exact, DATA)
 apply_clustering(clustering_1_normalization, DATA)
 apply_clustering(clustering_2_harsh_normalization, DATA)
-apply_clustering(clustering_3_fingerprinting, DATA)
-apply_clustering(clustering_4_bigram_fingerprinting, DATA, aggresive=True)
-apply_clustering(clustering_5_cologne, DATA, aggresive=True)
-apply_clustering(clustering_6_rusalka, DATA, aggresive=True)
-apply_clustering(clustering_7_snm, DATA, aggresive=True)
+apply_clustering(clustering_3_initials, DATA, aggresive=True)
+apply_clustering(clustering_4_fingerprinting, DATA, aggresive=True)
+apply_clustering(clustering_5_bigram_fingerprinting, DATA, aggresive=True)
+apply_clustering(clustering_6_cologne, DATA, aggresive=True)
+apply_clustering(clustering_7_rusalka, DATA, aggresive=True)
+apply_clustering(clustering_8_snm, DATA, aggresive=True)
 
 ROWS_TO_MERGE = set()
 
