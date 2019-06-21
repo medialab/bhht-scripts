@@ -15,7 +15,7 @@ from Levenshtein import distance as levenshtein
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = True
+TEST_RUN = False
 TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
