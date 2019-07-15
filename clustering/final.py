@@ -16,7 +16,7 @@ INPUT = './final.csv'
 WIKIDATA_EXTERNAL_SOURCES = './wikidata_external_sources.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = True
+TEST_RUN = False
 TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
@@ -211,7 +211,7 @@ def apply_clustering(method, data, aggresive=False, unambiguous=False):
     if unambiguous:
         category = 'unambiguous'
 
-    print('[%s] %s' % category)
+    print('[%s] %s' % (name, category))
     print('  clusters: %i' % n)
     print('  0 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
     print('  >0 clusters: %i (%2f)' % (len(non_zero_C), len(non_zero_C) / n))
