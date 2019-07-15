@@ -15,7 +15,7 @@ from Levenshtein import distance as levenshtein
 INPUT = './final.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = False
+TEST_RUN = True
 TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
@@ -42,9 +42,12 @@ def safe_cologne(name):
 def has_non_latin_characters(name):
     return bool(NON_LATIN_RE.search(name))
 
-def initialize(name):
+def tokenize(name):
     name = name.replace('-', '_').lower()
-    tokens = name.split('_')
+    return name.split('_')
+
+def initialize(name):
+    tokens = tokenize(name)
 
     if any(NUMBER_RE.match(t) for t in tokens):
         return name
@@ -198,7 +201,15 @@ def clustering_2_harsh_normalization(data):
 
 # 3. Initials normalization
 def clustering_3_initials(data):
-    return key_collision(data, key=lambda i: initialize(DATA[i]['transliteration']))
+    for cluster in key_collision(data, key=lambda i: initialize(DATA[i]['transliteration']), max_size=2):
+
+        # We check the cluster once more:
+        # If no item in the cluster has initials, we filter it
+        # NOTE: it deprives us of some clusters where Aleks would match Aleksander
+        # if not any(any(len(token.replace('.', '')) < 2 for token in tokenize(DATA[i]['name'])[:-1]) for i in cluster):
+        #     pass
+
+        yield cluster
 
 # 4. Fingerprinting
 def clustering_4_fingerprinting(data):
