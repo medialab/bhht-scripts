@@ -20,10 +20,12 @@ TEST_RUN_BATCH = 100_000
 
 FIELDNAMES_TO_ADD = [
     'transliteration',
+    'normalized_transliteration',
     'valid_cluster'
 ]
 
 NUMBER_RE = re.compile(r'(?:^[.,XVI0-9\-]+$|[()])', re.I)
+NON_LATIN_RE = re.compile(r'[^0-9A-Za-z\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\s]', re.I)
 
 def process(name):
     return name.lower().strip()
@@ -36,6 +38,9 @@ def safe_cologne(name):
         return cologne(name)
     except:
         return None
+
+def has_non_latin_characters(name):
+    return bool(NON_LATIN_RE.search(name))
 
 def initialize(name):
     name = name.replace('-', '_').lower()
@@ -119,7 +124,13 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
         reader = itertools.islice(reader, 0, TEST_RUN_BATCH)
 
     for line in tqdm(reader):
-        line['transliteration'] = unidecode(line['name'])
+        line['normalized_transliteration'] = unidecode(line['name'])
+
+        if has_non_latin_characters(line['name']):
+            line['transliteration'] = line['normalized_transliteration']
+        else:
+            line['transliteration'] = line['name']
+
         DATA.append(line)
 
 VALID_CLUSTERS = {}
