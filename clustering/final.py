@@ -13,6 +13,7 @@ from statistics import mean, median
 from Levenshtein import distance as levenshtein
 
 INPUT = './final.csv'
+WIKIDATA_EXTERNAL_SOURCES = './wikidata_external_sources.csv'
 OUTPUT = './final-clustering.csv'
 
 TEST_RUN = True
@@ -116,8 +117,32 @@ def confidence_score(cluster, boosted=False):
 
     return normalized
 
+EXTERNAL = defaultdict(list)
 DATA = []
 
+TUPLE_RE = re.compile(r"""(?<=['"]\)),\s""")
+
+def parse_tuples(string):
+
+    if not string.strip():
+        return
+
+    for entry in TUPLE_RE.split(string):
+        t = eval(entry)
+        yield t[0], t[2]
+
+# Aggregating external sources
+with open(WIKIDATA_EXTERNAL_SOURCES) as f:
+    reader = csv.reader(f)
+    next(reader)
+
+    for row in tqdm(reader, desc='Reading external sources'):
+        wikidata_code = row[0]
+
+        for key, identifier in parse_tuples(row[2]):
+            EXTERNAL[wikidata_code].append((key, identifier))
+
+# Reading data
 with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
     reader = csv.DictReader(f)
     fieldnames = reader.fieldnames
@@ -126,7 +151,7 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
     if TEST_RUN:
         reader = itertools.islice(reader, 0, TEST_RUN_BATCH)
 
-    for line in tqdm(reader):
+    for line in tqdm(reader, desc='Processing data'):
         line['normalized_transliteration'] = unidecode(line['name'])
 
         if has_non_latin_characters(line['name']):
@@ -138,7 +163,7 @@ with codecs.open(INPUT, encoding='utf-8', errors='replace') as f:
 
 VALID_CLUSTERS = {}
 
-def apply_clustering(method, data, aggresive=False):
+def apply_clustering(method, data, aggresive=False, unambiguous=False):
     name = method.__name__
 
     threshold = 0.75 if not aggresive else 0.8
@@ -150,12 +175,17 @@ def apply_clustering(method, data, aggresive=False):
     n = 0
     C = []
     V = 0
+
     for c, cluster in enumerate(method(range(len(DATA)))):
         items = [DATA[i] for i in cluster]
         I += len(items)
         n += 1
 
-        confidence = confidence_score(items)
+        if unambiguous:
+            confidence = 1
+        else:
+            confidence = confidence_score(items)
+
         C.append(confidence)
 
         if confidence >= threshold:
@@ -176,7 +206,12 @@ def apply_clustering(method, data, aggresive=False):
     invalid_C = [c for c in C if c == 0]
     valid_C = [c for c in C if c >= threshold]
 
-    print('[%s] %s' % (name, 'aggressive' if aggresive else 'mild'))
+    category = 'aggresive' if aggresive else 'mild'
+
+    if unambiguous:
+        category = 'unambiguous'
+
+    print('[%s] %s' % category)
     print('  clusters: %i' % n)
     print('  0 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
     print('  >0 clusters: %i (%2f)' % (len(non_zero_C), len(non_zero_C) / n))
@@ -187,8 +222,23 @@ def apply_clustering(method, data, aggresive=False):
     print('  confidence median: %2f *%2f' % (median(C), non_zero_median))
     print()
 
-# 0. Exact
-def clustering_0_exact(data):
+# 0a
+def clustering_0a_external_identifiers(data):
+
+    default_list = []
+
+    def keys(i):
+        code = DATA[i].get('wikidata_code')
+
+        if code is None:
+            return
+
+        return EXTERNAL.get(code, default_list)
+
+    return key_collision(data, keys=keys)
+
+# 0b Exact
+def clustering_0b_exact(data):
     return key_collision(data, key=lambda i: DATA[i]['name'])
 
 # 1. Basic normalization
@@ -237,7 +287,8 @@ def clustering_8_snm(data):
     return sorted_neighborhood(data, radius=1, window=20, distance=distance, keys=zig_zag)
 
 # Applying clusterings
-apply_clustering(clustering_0_exact, DATA)
+apply_clustering(clustering_0a_external_identifiers, DATA, unambiguous=True)
+apply_clustering(clustering_0b_exact, DATA)
 apply_clustering(clustering_1_normalization, DATA)
 apply_clustering(clustering_2_harsh_normalization, DATA)
 apply_clustering(clustering_3_initials, DATA, aggresive=True)
