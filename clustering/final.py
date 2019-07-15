@@ -81,7 +81,7 @@ def confidence_score(cluster, boosted=False):
         len(births_without_missing) > 1 or
         len(deaths_without_missing) > 1
     ):
-        return -1
+        return 0
 
     score += 1 - len([r['gender_B'] for r in cluster if missing(r['gender_B'])]) / len(cluster)
     score += 1 - len([r['birth_B'] for r in cluster if missing(r['birth_B'])]) / len(cluster)
@@ -159,12 +159,12 @@ def apply_clustering(method, data, aggresive=False):
     non_zero_mean = mean(non_zero_C)
     non_zero_median = median(non_zero_C)
 
-    invalid_C = [c for c in C if c == -1]
+    invalid_C = [c for c in C if c == 0]
     valid_C = [c for c in C if c >= threshold]
 
     print('[%s] %s' % (name, 'aggressive' if aggresive else 'mild'))
     print('  clusters: %i' % n)
-    print('  -1 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
+    print('  0 clusters: %i (%2f)' % (len(invalid_C), len(invalid_C) / n))
     print('  >0 clusters: %i (%2f)' % (len(non_zero_C), len(non_zero_C) / n))
     print('  >%s clusters: %i (%2f)' % (str(threshold), len(valid_C), len(valid_C) / n))
     print('  >%s never seen before clusters: %i (%2f)' % (str(threshold), V, V / n))
