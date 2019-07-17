@@ -6,18 +6,19 @@ from tqdm import tqdm
 from collections import defaultdict
 from unidecode import unidecode
 from fog.clustering import passjoin, key_collision, sorted_neighborhood
+from fog.metrics import overlap_coefficient
 from fog.phonetics import cologne, rusalka
 from fog.utils import squeeze
 from fog.key import fingerprint, ngrams_fingerprint
 from statistics import mean, median
 from Levenshtein import distance as levenshtein
 
-INPUT = './final.csv'
+INPUT = './final-with-ranking.csv'
 WIKIDATA_EXTERNAL_SOURCES = './wikidata_external_sources.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = False
-TEST_RUN_BATCH = 100_000
+TEST_RUN = True
+TEST_RUN_BATCH = 1_000_000
 
 FIELDNAMES_TO_ADD = [
     'transliteration',
@@ -136,6 +137,9 @@ with open(WIKIDATA_EXTERNAL_SOURCES) as f:
     reader = csv.reader(f)
     next(reader)
 
+    if TEST_RUN:
+        reader = itertools.islice(reader, 0, TEST_RUN_BATCH)
+
     for row in tqdm(reader, desc='Reading external sources'):
         wikidata_code = row[0]
 
@@ -235,7 +239,46 @@ def clustering_0a_external_identifiers(data):
 
         return EXTERNAL.get(code, default_list)
 
-    return key_collision(data, keys=keys)
+    for cluster in key_collision(data, keys=keys, max_size=2):
+
+        codeA = DATA[cluster[0]].get('wikidata_code')
+        codeB = DATA[cluster[1]].get('wikidata_code')
+
+        # We want perfect overlap
+        A = EXTERNAL.get(codeA, set()) if codeA else set()
+        B = EXTERNAL.get(codeB, set()) if codeB else set()
+
+        # NOTE: we could rely on key intersection match
+        # if overlap_coefficient(A, B) != 1:
+        #     continue
+
+        Ak = set(s for s, _ in A)
+        Bk = set(s for s, _ in B)
+
+        Ik = Ak & Bk
+
+        assert len(Ik) > 0
+
+        Ai = set(p for p in A if p[0] in Ik)
+        Bi = set(p for p in B if p[0] in Ik)
+
+        # print()
+        if Ai != Bi:
+        #     print('DISCARD')
+        #     print(A)
+        #     print(B)
+        #     print(Ik)
+        #     print(DATA[cluster[0]]['name'], '=>', DATA[cluster[1]]['name'])
+            continue
+
+        # print('KEEP')
+        # print(A)
+        # print(B)
+        # print(Ik)
+        # print(DATA[cluster[0]]['name'], '=>', DATA[cluster[1]]['name'])
+
+        yield cluster
+
 
 # 0b Exact
 def clustering_0b_exact(data):
