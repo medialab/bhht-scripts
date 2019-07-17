@@ -17,7 +17,7 @@ INPUT = './final-with-ranking.csv'
 WIKIDATA_EXTERNAL_SOURCES = './wikidata_external_sources.csv'
 OUTPUT = './final-clustering.csv'
 
-TEST_RUN = True
+TEST_RUN = False
 TEST_RUN_BATCH = 1_000_000
 
 FIELDNAMES_TO_ADD = [
