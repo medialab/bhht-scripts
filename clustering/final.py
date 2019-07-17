@@ -10,7 +10,7 @@ from fog.metrics import overlap_coefficient
 from fog.phonetics import cologne, rusalka
 from fog.utils import squeeze
 from fog.key import fingerprint, ngrams_fingerprint
-from statistics import mean, median
+from statistics import mean, median, stdev
 from Levenshtein import distance as levenshtein
 
 INPUT = './final-with-ranking.csv'
@@ -342,17 +342,27 @@ apply_clustering(clustering_7_rusalka, DATA, aggresive=True)
 apply_clustering(clustering_8_snm, DATA, aggresive=True)
 
 ROWS_TO_MERGE = set()
+RANKINGS = []
 
 for key, method in VALID_CLUSTERS.items():
     ROWS_TO_MERGE.update(key)
 
     for i in key:
         DATA[i]['valid_cluster'] = method
+        ranking = DATA[i]['ranking_final_B_5']
+
+        if ranking:
+            ranking = float(ranking)
+            RANKINGS.append(ranking)
         # print(DATA[i]['name'], DATA[i]['gender_B'], DATA[i]['birth_B'], DATA[i]['death_B'], DATA[i]['final_occupation_L2_B'], DATA[i]['final_citizenship'], DATA[i][method + '_confidence'], method)
 
     # print()
 
 print('Found a total of %i valid clusters gathering %i rows' % (len(VALID_CLUSTERS), len(ROWS_TO_MERGE)))
+print('  Median ranking: %2f' % median(RANKINGS))
+print('  Mean ranking: %2f' % mean(RANKINGS))
+print('  Stdev ranking: %2f' % stdev(RANKINGS))
+print('  Min ranking: %2f' % min(RANKINGS))
 
 with open(OUTPUT, 'w') as of:
     writer = csv.DictWriter(of, fieldnames=fieldnames + FIELDNAMES_TO_ADD)
