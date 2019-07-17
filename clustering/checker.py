@@ -9,7 +9,7 @@ with open('./tocheck.csv') as f:
         cluster_method = line['valid_cluster']
         cluster_id = line[cluster_method]
 
-        CLUSTERS[cluster_id].append(line)
+        CLUSTERS[(cluster_method, cluster_id)].append(line)
 
 def get_ranking(row):
     ranking = row['ranking_final_B_5']

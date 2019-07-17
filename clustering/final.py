@@ -241,6 +241,10 @@ def clustering_0a_external_identifiers(data):
 
     for cluster in key_collision(data, keys=keys, max_size=2):
 
+        # TODO: remove when fog is fixed
+        if len(cluster) > 2:
+            continue
+
         codeA = DATA[cluster[0]].get('wikidata_code')
         codeB = DATA[cluster[1]].get('wikidata_code')
 
