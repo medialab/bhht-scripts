@@ -334,7 +334,7 @@ def clustering_8_snm(data):
     return sorted_neighborhood(data, radius=1, window=20, distance=distance, keys=zig_zag)
 
 # Applying clusterings
-apply_clustering(clustering_0a_external_identifiers, DATA, unambiguous=True)
+apply_clustering(clustering_0a_external_identifiers, DATA)
 apply_clustering(clustering_0b_exact, DATA)
 apply_clustering(clustering_1_normalization, DATA)
 apply_clustering(clustering_2_harsh_normalization, DATA)
@@ -372,5 +372,5 @@ with open(OUTPUT, 'w') as of:
     writer = csv.DictWriter(of, fieldnames=fieldnames + FIELDNAMES_TO_ADD)
     writer.writeheader()
 
-    for item in DATA:
+    for item in tqdm(DATA, desc='Writing ouput'):
         writer.writerow(item)
