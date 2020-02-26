@@ -65,7 +65,16 @@ with open('./creationdates.csv', 'w') as output_file:
 
         loading_bar = tqdm(desc='Fetching %s' % lang, total=len(names))
 
-        for result in multithreaded_fetch(urls, domain_parallelism=PARALLELISM, key=key):
+        mf = multithreaded_fetch(
+            urls,
+            domain_parallelism=PARALLELISM,
+            throttle=0,
+            guess_encoding=False,
+            guess_extension=False,
+            key=key
+        )
+
+        for result in mf:
             loading_bar.update()
             timestamp = extract_timestamp(result.response)
 
