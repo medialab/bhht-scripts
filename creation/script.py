@@ -4,7 +4,7 @@ from minet import multithreaded_fetch
 from tqdm import tqdm
 from collections import defaultdict
 
-PARALLELISM = 1
+PARALLELISM = 10
 GROUPS = 50
 LIMIT = None
 
@@ -42,8 +42,12 @@ with open('./missing_creationdate.csv') as f:
     next(reader)
 
     i = 0
-    for line in tqdm(reader, desc='Reading CSV file'):
+    for line in tqdm(reader, desc='Reading CSV file', unit=' lines'):
         i += 1
+
+        # if line[0] != 'sat':
+        #     continue
+
         PAGES[line[0]].append(line[1])
 
         if LIMIT is not None and i >= LIMIT:
